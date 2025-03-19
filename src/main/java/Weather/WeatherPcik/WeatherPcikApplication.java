@@ -7,7 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class WeatherPcikApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication.run(WeatherPcikApplication.class, args);
+		println("hello");
 	}
 
 }
