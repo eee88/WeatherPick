@@ -1,24 +1,26 @@
-import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Map from './Map';
+import Reviewpage from './Reviewpage';
+import Mypage from './Mypage';
+import Sidebar from './Sidebar';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      {/* 🔧 여기 flex container 추가 */}
+      <div style={{ display: 'flex', height: '100vh' }}>
+        <Sidebar />
+        {/* 🔁 페이지 전환이 이 영역에서 일어남 */}
+        <div style={{ flex: 1, padding: '20px' }}>
+          <Routes>
+            <Route path="/" element={<Map />} />
+            <Route path="/Reviewpage" element={<Reviewpage />} />
+            <Route path="/Mypage" element={<Mypage />} />
+          </Routes>
+        </div>
+      </div>
+    </BrowserRouter>
   );
 }
 

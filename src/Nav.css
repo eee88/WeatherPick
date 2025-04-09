@@ -1,0 +1,12 @@
+.navbar img{
+    text-align: center;
+    padding-left: 15%;
+    width: 70%;
+}    
+
+.navbarMenu {
+    color: rgb(42, 31, 161);
+    padding-top: 150px;
+    display: flex;
+    flex-direction: row;
+}
