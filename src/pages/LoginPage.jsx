@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import "../App.css";
-import logo from "../assets/weather_logo-remove.png";
+import logo from "../assets/weatherPickLogo.png";
 
 export default function LoginPage() {
   const navigate = useNavigate();
