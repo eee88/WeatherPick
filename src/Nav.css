@@ -1,0 +1,9 @@
+.navbar {
+    background-color: '#f5f5f5';
+}
+.navbarMenu {
+    display: flex;
+    flex-direction: column;
+    padding-top: 100px;
+    align-items: center;
+}
