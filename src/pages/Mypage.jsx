@@ -161,9 +161,8 @@ const Mypage = () => {
             </div>
             <div className="right-links">
               <p onClick={() => setReviewModalOpen(true)}>내가 쓴 리뷰</p>
-              {/* <p>자기가 추천 글 올린 목록</p> */}
               <p onClick={() => setCommentModalOpen(true)}>작성한 댓글</p>
-              <p onClick={() => setLikedModalOpen(true)}>추천한 글 목록</p>
+              <p onClick={() => setLikedModalOpen(true)}>스크랩한 글 목록</p>
             </div>
           </div>
         </div>
