@@ -1,0 +1,25 @@
+.sidebarContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 6rem; /* 살짝 더 넓게 */
+  background-color: #fff;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1); /* 그림자 추가 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  z-index: 1000;
+}
+
+.sidebarContainer img {
+  width: 70%;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.sidebarContainer img:hover {
+  transform: scale(1.1); /* 마우스 오버 시 확대 */
+}

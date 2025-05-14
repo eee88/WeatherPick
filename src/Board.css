@@ -1,0 +1,207 @@
+.board-container {
+    padding: 2rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f9f9f9;
+    min-height: 100vh;
+  }
+  
+  .board-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 1rem;
+  }
+  
+  .board-button {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+  }
+  
+  .board-button button {
+    padding: 0.6rem 1.2rem;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .board-button button:hover {
+    background-color: #388e3c;
+  }
+  
+  .board-posts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .board-post-item {
+    background-color: white;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .board-post-item:hover {
+    background-color: #f1f8e9;
+  }
+  
+  .board-post-item a {
+    font-weight: bold;
+    text-decoration: none;
+    color: #333;
+    margin-right: 1rem;
+  }
+  
+  .board-post-item span {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  .board-posts-per-page {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .board-posts-per-page select {
+    margin-left: 0.5rem;
+    padding: 0.4rem;
+    font-size: 1rem;
+  }
+  
+  .board-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+    gap: 0.5rem;
+  }
+  
+  .board-pagination button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    background-color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+  }
+  
+  .board-pagination button.selected {
+    background-color: #1976d2;
+    color: white;
+    border: 1px solid #1976d2;
+  }
+  
+  .board-pagination button:hover {
+    background-color: #e3f2fd;
+  }
+  /* PostForm - 폼 컨테이너 */
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+  }
+  
+  .input-group span {
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+    color: #333;
+  }
+  
+  .input-group input {
+    padding: 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  
+  textarea {
+    width: 100%;
+    height: 200px; /* 고정 높이 */
+    padding: 1rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: none; /* 크기 조절 비활성화 */
+    margin-bottom: 1.5rem;
+    box-sizing: border-box;
+  }
+  
+  
+  .button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+  
+  .button-group button {
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .button-group button:hover {
+    background-color: #115293;
+  }
+  
+  .button-group button:last-child {
+    background-color: #9e9e9e;
+  }
+  
+  .button-group button:last-child:hover {
+    background-color: #757575;
+  }
+  .search-bar {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .search-bar input {
+    width: 60%;
+    padding: 10px;
+    font-size: 16px;
+  }
+  
+  .swiper-wrapper {
+    margin-bottom: 30px;
+  }
+  
+  .slide-card {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .slide-card:hover {
+    background: #e9ecef;
+  }
+  
+  .writer {
+    color: #666;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  
