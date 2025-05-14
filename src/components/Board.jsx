@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
 import "../Board.css";
+
 const Board = () => {
   const navigate = useNavigate();
   const [boardList, setBoardList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [postsPerPage, setPostsPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(1); 
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     getBoardList();
@@ -24,9 +27,17 @@ const Board = () => {
     }
   };
 
+  // 검색 필터
+  const filteredList = boardList.filter(
+    (board) =>
+      board.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      board.writer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      board.body.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = boardList.slice(indexOfFirstPost, indexOfLastPost);
+  const currentPosts = filteredList.slice(indexOfFirstPost, indexOfLastPost);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -38,14 +49,43 @@ const Board = () => {
   const Post = () => {
     navigate("/postform");
   };
+
   return (
     <div className="board-container">
       <h1 className="board-title">리뷰 페이지</h1>
+
+      {/* 🔍 검색창 */}
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="제목/작성자/내용 검색"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {/* 🌀 Swiper 최신 게시물 미리보기 */}
+      <div className="swiper-wrapper">
+        <Swiper spaceBetween={10} slidesPerView={1}>
+          {filteredList.slice(0, 5).map((board) => (
+            <SwiperSlide key={board.id}>
+              <div className="slide-card" onClick={() => navigate(`/board/${board.id}`)}>
+                <h3>{board.title}</h3>
+                <p>{board.body?.slice(0, 80)}...</p>
+                <p className="writer">작성자: {board.writer}</p>
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
+
+      {/* ✍ 글쓰기 버튼 */}
       <div className="board-button">
         <button onClick={Post}>글쓰기</button>
       </div>
       <br />
 
+      {/* 📄 게시물 목록 */}
       <ul className="board-posts">
         {currentPosts.map((board) => (
           <li key={board.id} className="board-post-item">
@@ -56,19 +96,9 @@ const Board = () => {
         ))}
       </ul>
 
-      {/* <div className="board-posts-per-page">
-        <label>
-          게시물 수:{" "}
-          <select value={postsPerPage} onChange={handlePostsPerPage}>
-            <option value={10}>10개</option>
-            <option value={20}>20개</option>
-            <option value={30}>30개</option>
-          </select>
-        </label>
-      </div> */}
-
+      {/* 📄 페이지네이션 */}
       <div className="board-pagination">
-        {[...Array(totalPages).keys()].map((number) => (
+        {[...Array(Math.ceil(filteredList.length / postsPerPage)).keys()].map((number) => (
           <button
             key={number + 1}
             className={currentPage === number + 1 ? "selected" : ""}
