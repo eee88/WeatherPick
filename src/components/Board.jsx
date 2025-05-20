@@ -20,10 +20,15 @@ const Board = () => {
   const getBoardList = async () => {
     try {
       const response = await axios.get("http://localhost:8080/board/me");
-      setBoardList(response.data);
-      setTotalPages(Math.ceil(response.data.length / postsPerPage));
+      // 응답 데이터가 배열인지 확인하고, 배열이 아니면 빈 배열로 초기화
+      const data = Array.isArray(response.data) ? response.data : [];
+      setBoardList(data);
+      setTotalPages(Math.ceil(data.length / postsPerPage));
     } catch (error) {
       console.error("불러오지 못함", error);
+      // 에러 발생 시 빈 배열로 초기화
+      setBoardList([]);
+      setTotalPages(1);
     }
   };
 
