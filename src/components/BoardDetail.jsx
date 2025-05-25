@@ -33,6 +33,7 @@ const BoardDetail = () => {
 
   const deletePost = async () => {
     if (window.confirm("게시글을 삭제하시겠습니까?")) {
+      const token = localStorage.getItem("token");
         await axios.delete(
         ` ${API_URL}/api/posts/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
