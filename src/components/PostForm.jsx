@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../Board.css";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const PostForm = ({ addPost }) => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
@@ -30,24 +32,27 @@ const PostForm = ({ addPost }) => {
   const savePost = async (e) => {
     e.preventDefault();
     try {
+      // ▶ 게시글 생성: POST /api/posts (토큰 인증)
+      const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:8080/board",
+        `${API_URL}/api/posts`,
         {
-          title: title,
-          places: places.filter(place => place.trim() !== ""), // 빈 장소는 제외
-          body: body,
+          title: title,        // DTO: title
+          content: body,       // DTO: content
+          placeList: places.filter(p => p.trim() !== "") // DTO: placeList
         },
         {
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
           },
         }
       );
-
+      
       if (response.status === 200) {
         alert("게시물이 등록되었습니다.");
         navigate("/board");
-      } else {
+     } else {
         throw new Error("게시물 등록 실패");
       }
     } catch (error) {

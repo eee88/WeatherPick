@@ -6,6 +6,7 @@ import Board from "./components/Board"; // 게시판 메인
 import BoardDetail from "./components/BoardDetail"; // 게시글 상세
 import PostForm from "./components/PostForm"; // 글쓰기
 import PostEditForm from "./components/PostEditForm"; // 글수정
+import PlaceForm from "./components/PlaceForm"; // 장소 등록
 
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -28,6 +29,9 @@ export default function App() {
             <Route path="/board/:id" element={<BoardDetail />} />
             <Route path="/postform" element={<PostForm />} />
             <Route path="/edit/:id" element={<PostEditForm />} />
+
+            {/* 장소 등록 페이지 */}
+            <Route path="/place" element={<PlaceForm />} />
 
             {/* 기타 페이지 */}
             <Route path="/map" element={<Map />} />
