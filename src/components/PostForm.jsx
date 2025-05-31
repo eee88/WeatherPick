@@ -1,58 +1,66 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../Board.css";
+import "../PostForm.css";
+
+
+//  POST /api/posts               : 새 게시글(리뷰) 작성
+//    Body → { title, content, placeList: [장소1, 장소2, …] }
+
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-const PostForm = ({ addPost }) => {
+const PostForm = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [places, setPlaces] = useState([""]);  // 장소 배열, 초기값은 빈 문자열 하나
+  const [places, setPlaces] = useState([""]);
   const [error, setError] = useState("");
 
+  // 장소 항목 추가
   const addPlace = () => {
     if (places.length < 5) {
       setPlaces([...places, ""]);
     }
   };
 
+  // 특정 인덱스 장소 삭제
   const removePlace = (index) => {
     const newPlaces = places.filter((_, i) => i !== index);
     setPlaces(newPlaces);
   };
 
+  // 특정 인덱스 장소값 변경
   const handlePlaceChange = (index, value) => {
     const newPlaces = [...places];
     newPlaces[index] = value;
     setPlaces(newPlaces);
   };
 
+  // 게시물 저장 요청
   const savePost = async (e) => {
     e.preventDefault();
     try {
-      // ▶ 게시글 생성: POST /api/posts (토큰 인증)
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `${API_URL}/api/posts`,
         {
-          title: title,        // DTO: title
-          content: body,       // DTO: content
-          placeList: places.filter(p => p.trim() !== "") // DTO: placeList
+          title: title,
+          content: body,
+          placeList: places.filter((p) => p.trim() !== ""),
         },
         {
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      
+
       if (response.status === 200) {
         alert("게시물이 등록되었습니다.");
         navigate("/board");
-     } else {
+      } else {
         throw new Error("게시물 등록 실패");
       }
     } catch (error) {
@@ -61,68 +69,88 @@ const PostForm = ({ addPost }) => {
     }
   };
 
+  // 게시판으로 돌아가기
   const backToBoard = () => {
     navigate("/board");
   };
 
   return (
-    <div className="container">
-      <div className="input-group">
-        <h2 style={{ textAlign: "center" }}>글쓰기</h2>
-        <span>제목</span>
+    <div className="post-container">
+      {/* 글쓰기 헤더 */}
+      <h2 className="post-header">글쓰기</h2>
+
+      {/* ─── 제목 입력 ─── */}
+      <div className="post-row">
+        <label htmlFor="title-input" className="post-label-inline">
+          제목
+        </label>
         <input
+          id="title-input"
           type="text"
-          placeholder="제목"
+          className="post-input-inline"
+          placeholder="제목을 입력하세요"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
 
-      <div className="places-container">
-        <div className="places-header">
-          <span>장소</span>
-          {places.length < 5 && (
-            <button 
-              type="button" 
-              onClick={addPlace}
-              className="add-place-button"
+      {/* ─── 장소 (최대 5개) ─── */}
+      <div className="post-row">
+        <label className="post-label-inline">장소 (최대 5개)</label>
+        {places.length < 5 && (
+          <button
+            type="button"
+            onClick={addPlace}
+            className="post-add-place-btn"
+          >
+            + 장소 추가
+          </button>
+        )}
+      </div>
+      {places.map((place, index) => (
+        <div key={index} className="post-row post-place-row">
+          <input
+            type="text"
+            className="post-input-full"
+            placeholder={`장소 ${index + 1}`}
+            value={place}
+            onChange={(e) => handlePlaceChange(index, e.target.value)}
+          />
+          {places.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removePlace(index)}
+              className="post-remove-place-btn"
             >
-              + 장소 추가
+              X
             </button>
           )}
         </div>
-        {places.map((place, index) => (
-          <div key={index} className="place-input-group">
-            <input
-              type="text"
-              placeholder={`장소 ${index + 1}`}
-              value={place}
-              onChange={(e) => handlePlaceChange(index, e.target.value)}
-            />
-            {places.length > 1 && (
-              <button 
-                type="button" 
-                onClick={() => removePlace(index)}
-                className="remove-place-button"
-              >
-                X
-              </button>
-            )}
-          </div>
-        ))}
+      ))}
+
+      {/* ─── 내용 입력 ─── */}
+      <div className="post-row">
+        <label className="post-label-block">내용</label>
+      </div>
+      <div className="post-row">
+        <textarea
+          className="post-textarea"
+          placeholder="내용을 입력하세요"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+        />
       </div>
 
-      <textarea
-        placeholder="내용"
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-      />
+      {error && <div className="post-error-message">{error}</div>}
 
-      {error && <div className="error-message">{error}</div>}
-
-      <div className="button-group">
-        <button onClick={savePost}>저장</button>
-        <button onClick={backToBoard}>취소</button>
+      {/* ─── 버튼 그룹 (저장 / 취소) ─── */}
+      <div className="post-button-group">
+        <button onClick={savePost} className="post-btn post-btn-primary">
+          저장
+        </button>
+        <button onClick={backToBoard} className="post-btn post-btn-secondary">
+          취소
+        </button>
       </div>
     </div>
   );

@@ -2,12 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import "../Board.css";
+
+const API_URL = process.env.REACT_APP_API_URL;
+
 const PostEditForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [post, setPost] = useState({});
+  const [post, setPost] = useState({
+    title: "",
+    body: "",
+    places: [],
+  });
 
-  const { writer, title, body } = post;
+  const { title, body, places } = post;
 
   const onChange = (event) => {
     const { value, name } = event.target;
@@ -19,24 +26,50 @@ const PostEditForm = () => {
 
   const getPost = async () => {
     try {
+      const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:8080/board?writingId=${id}`
+        `${API_URL}/api/posts/${id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      setPost(response.data);
+      // response.data: { id, title, content, placeList, writerUsername, createDate, ... }
+      setPost({
+        title: response.data.title || "",
+        body: response.data.content || "",
+        places: Array.isArray(response.data.placeList)
+          ? response.data.placeList
+          : [],
+      });
     } catch (error) {
       console.error("불러오지 못함", error);
     }
   };
+
   const backToPost = () => {
     navigate("/board/" + id);
   };
+
   const updatePost = async () => {
     try {
+      const token = localStorage.getItem("token");
       const response = await axios.put(
-        `http://localhost:8080/board/${id}`,
-        post
+        `${API_URL}/api/posts/${id}`,
+        {
+          title: post.title,
+          content: post.body,
+          placeList: post.places || [],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-      console.log(post);
       if (response.status === 200) {
         alert("수정되었습니다.");
         navigate("/board/" + id);
@@ -52,11 +85,10 @@ const PostEditForm = () => {
   useEffect(() => {
     getPost();
   }, []);
+
   return (
     <div>
-      <h2 class style={{ textAlign: "center" }}>
-        글 수정하기
-      </h2>
+      <h2 style={{ textAlign: "center" }}>글 수정하기</h2>
       <div className="container">
         <div className="input-group">
           <span>제목</span>
@@ -72,11 +104,10 @@ const PostEditForm = () => {
             type="text"
             name="writer"
             placeholder="작성자"
-            value={writer}
+            value={post.writerUsername || ""}
             readOnly={true}
           />
           <br />
-
           <br />
           <textarea
             placeholder="내용"
