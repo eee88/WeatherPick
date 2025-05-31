@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import weatherPickHome from './assets/weatherPickHome.png';
 import weatherPickReview from './assets/weatherPickReview.png';
 import weatherPickMy from './assets/weatherPickMy.png';
+import weatherPickPlace from './assets/weatherPickPlace.png'; 
 import './Nav.css';
 
 function Nav() {
@@ -12,6 +13,9 @@ function Nav() {
       </Link>
       <Link className="navbarMenu" to="/Board">
         <img src={weatherPickReview} alt="review" />
+      </Link>
+      <Link className="navbarMenu" to="/place">
+        <img src={weatherPickPlace} alt="place" />
       </Link>
       <Link className="navbarMenu" to="/Mypage">
         <img src={weatherPickMy} alt="menu" />

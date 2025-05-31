@@ -205,3 +205,68 @@
     margin-top: 10px;
   }
   
+  /* Places input styling */
+  .places-container {
+    margin-bottom: 1.5rem;
+  }
+  
+  .places-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .add-place-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .add-place-button:hover {
+    background-color: #45a049;
+  }
+  
+  .place-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .place-input-group input {
+    flex: 1;
+    padding: 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+  
+  .remove-place-button {
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+  }
+  
+  .remove-place-button:hover {
+    background-color: #cc0000;
+  }
+  
+  .error-message {
+    color: #ff4444;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+  

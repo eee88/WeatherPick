@@ -7,6 +7,8 @@ import defaultProfile from "../assets/weatherPickMy.png";
 
 Modal.setAppElement("#root");
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const Mypage = () => {
   const navigate = useNavigate();
 
@@ -28,34 +30,46 @@ const Mypage = () => {
   const [isCommentModalOpen, setCommentModalOpen] = useState(false);
   const [isLikedModalOpen, setLikedModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchUserInfo();
-    fetchUserActivity();
-  }, []);
-
-  const fetchUserInfo = async () => {
-    try {
-      const res = await axios.get("http://localhost:8080/user/me");
-      setUserInfo(res.data);
-    } catch (error) {
-      console.error("유저 정보 불러오기 실패", error);
-    }
-  };
-
   const fetchUserActivity = async () => {
     try {
-      const [reviews, comments, likes] = await Promise.all([
-        axios.get("http://localhost:8080/reviews/me"),
-        axios.get("http://localhost:8080/comments/me"),
-        axios.get("http://localhost:8080/likes/me"),
+      const token = localStorage.getItem("token");
+      // 내가 쓴 게시글,댓글,스크랩한글 조회
+      const [resPosts, resComments, resScraps] = await Promise.all([ 
+        axios.get(`${API_URL}/api/posts/mine`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_URL}/api/comments/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get(`${API_URL}/api/posts/scraps`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
-      setMyReviews(reviews.data);
-      setMyComments(comments.data);
-      setLikedPosts(likes.data);
+
+      setMyReviews(resPosts.data);
+      setMyComments(resComments.data);
+      setLikedPosts(resScraps.data);
     } catch (error) {
       console.error("활동 내역 불러오기 실패", error);
     }
   };
+
+      const fetchUserInfo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${API_URL}/api/user`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUserInfo(res.data);
+      } catch (err) {
+        console.error("유저 정보 불러오기 실패", err);
+      }
+    };
+
+  useEffect(() => {
+    fetchUserInfo();
+    fetchUserActivity();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,9 +91,15 @@ const Mypage = () => {
         formData.append(key, value);
       });
 
-      await axios.put("http://localhost:8080/user/update", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${API_URL}/api/user/${userInfo.username}`,
+        formData,
+        { headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`
+          } }
+      );
 
       alert("정보가 수정되었습니다.");
     } catch (error) {
@@ -89,9 +109,16 @@ const Mypage = () => {
   };
 
   const goToPost = async (postId) => {
+    const token = localStorage.getItem("token");
     try {
-      const res = await axios.get(`http://localhost:8080/board/${postId}`);
+      // ▶ 백엔드 GET /api/posts/:postId 호출 (토큰 인증)
+      const res = await axios.get(
+        `${API_URL}/api/posts/${postId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
       if (res.status === 200) {
+        // API 호출이 성공하면 상세 페이지로 이동
         navigate(`/board/${postId}`);
       } else {
         throw new Error();
@@ -100,6 +127,7 @@ const Mypage = () => {
       alert("해당 게시물이 삭제되었거나 존재하지 않습니다.");
     }
   };
+
 
   return (
     <div className="mypage-wrapper">

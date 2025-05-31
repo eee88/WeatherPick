@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../Board.css";
+const API_URL = process.env.REACT_APP_API_URL;
+
 const BoardDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -9,8 +11,10 @@ const BoardDetail = () => {
 
   const getBoard = async () => {
     try {
+      const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:8080/board?writingId=${id}`
+        `${API_URL}/api/posts/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setBoard(response.data);
@@ -29,7 +33,11 @@ const BoardDetail = () => {
 
   const deletePost = async () => {
     if (window.confirm("게시글을 삭제하시겠습니까?")) {
-      await axios.delete(`http://localhost:8080/board/${id}`);
+      const token = localStorage.getItem("token");
+        await axios.delete(
+        ` ${API_URL}/api/posts/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
       alert("삭제되었습니다.");
       navigate("/");
     }

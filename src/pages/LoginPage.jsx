@@ -28,7 +28,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8080/api/user/login", 
+      const response = await axios.post(`${API_URL}/api/user/login`, 
         JSON.stringify({
           username: formData.username,
           password: formData.password
@@ -49,7 +49,7 @@ export default function LoginPage() {
         localStorage.setItem("tokenExpiration", response.data.expirationTime);
         navigate("/board");
       } else {
-        setError(response.data.message || "로그인정보를 다시 확인하세요요");
+        setError(response.data.message || "로그인정보를 다시 확인하세요");
       }
     } catch (err) {
       console.error("로그인 에러 상세:", err);
