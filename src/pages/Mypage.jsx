@@ -12,6 +12,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 const Mypage = () => {
   const navigate = useNavigate();
 
+  // 이전 레이아웃에 맞춘 상태값들 (name, email, username, phone, password, profileImage)
   const [userInfo, setUserInfo] = useState({
     name: "",
     email: "",
@@ -30,11 +31,11 @@ const Mypage = () => {
   const [isCommentModalOpen, setCommentModalOpen] = useState(false);
   const [isLikedModalOpen, setLikedModalOpen] = useState(false);
 
+  // 내가 쓴 게시글, 댓글, 스크랩한 글을 한 번에 불러오는 함수
   const fetchUserActivity = async () => {
     try {
       const token = localStorage.getItem("token");
-      // 내가 쓴 게시글,댓글,스크랩한글 조회
-      const [resPosts, resComments, resScraps] = await Promise.all([ 
+      const [resPosts, resComments, resScraps] = await Promise.all([
         axios.get(`${API_URL}/api/posts/mine`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -46,25 +47,34 @@ const Mypage = () => {
         }),
       ]);
 
-      setMyReviews(resPosts.data);
-      setMyComments(resComments.data);
-      setLikedPosts(resScraps.data);
+      setMyReviews(Array.isArray(resPosts.data) ? resPosts.data : []);
+      setMyComments(Array.isArray(resComments.data) ? resComments.data : []);
+      setLikedPosts(Array.isArray(resScraps.data) ? resScraps.data : []);
     } catch (error) {
       console.error("활동 내역 불러오기 실패", error);
     }
   };
 
-      const fetchUserInfo = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${API_URL}/api/user`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUserInfo(res.data);
-      } catch (err) {
-        console.error("유저 정보 불러오기 실패", err);
-      }
-    };
+  // 내가 쓴 유저 정보 (username, nickname, profileImage 등) 불러오는 함수
+  const fetchUserInfo = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_URL}/api/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // res.data 예시: { code, massage, username, nickname, profileImage }
+      setUserInfo({
+        name: res.data.name || "",
+        email: res.data.email || "",
+        username: res.data.username,
+        phone: res.data.phonenumber || "",
+        password: "", // 비밀번호는 보안 상 초기값으로 비워둡니다.
+        profileImage: res.data.profileImage,
+      });
+    } catch (err) {
+      console.error("유저 정보 불러오기 실패", err);
+    }
+  };
 
   useEffect(() => {
     fetchUserInfo();
@@ -73,34 +83,43 @@ const Mypage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUserInfo({ ...userInfo, [name]: value });
+    setUserInfo((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setUserInfo({ ...userInfo, profileImage: file });
+      setUserInfo((prev) => ({ ...prev, profileImage: file }));
       setPreview(URL.createObjectURL(file));
     }
   };
 
+  // 프로필/닉네임/이메일/전화번호/비밀번호 변경 시 처리
   const handleUpdate = async () => {
     try {
       const formData = new FormData();
-      Object.entries(userInfo).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
+      formData.append("username", userInfo.username);
+      formData.append("nickname", userInfo.name); // 이전 레이아웃은 name 필드를 nickname처럼 썼었습니다.
+      formData.append("email", userInfo.email);
+      formData.append("phonenumber", userInfo.phone);
+      if (userInfo.password.trim() !== "") {
+        formData.append("password", userInfo.password);
+      }
+      if (userInfo.profileImage instanceof File) {
+        formData.append("profileImage", userInfo.profileImage);
+      }
 
       const token = localStorage.getItem("token");
       await axios.put(
         `${API_URL}/api/user/${userInfo.username}`,
         formData,
-        { headers: {
+        {
+          headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`
-          } }
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
-
       alert("정보가 수정되었습니다.");
     } catch (error) {
       console.error("정보 수정 실패", error);
@@ -108,17 +127,15 @@ const Mypage = () => {
     }
   };
 
+  // 게시글 상세 페이지로 이동
   const goToPost = async (postId) => {
     const token = localStorage.getItem("token");
     try {
-      // ▶ 백엔드 GET /api/posts/:postId 호출 (토큰 인증)
       const res = await axios.get(
         `${API_URL}/api/posts/${postId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       if (res.status === 200) {
-        // API 호출이 성공하면 상세 페이지로 이동
         navigate(`/board/${postId}`);
       } else {
         throw new Error();
@@ -128,19 +145,20 @@ const Mypage = () => {
     }
   };
 
-
   return (
     <div className="mypage-wrapper">
       <div className="mypage-content">
         <div className="profile-image-container">
           <img
-            src={preview || defaultProfile}
+            src={preview || userInfo.profileImage || defaultProfile}
             alt="Profile"
             className="profile-image"
           />
           <button
             className="upload-button"
-            onClick={() => document.getElementById("profileImageInput").click()}
+            onClick={() =>
+              document.getElementById("profileImageInput").click()
+            }
           >
             +
           </button>
@@ -190,7 +208,9 @@ const Mypage = () => {
             <div className="right-links">
               <p onClick={() => setReviewModalOpen(true)}>내가 쓴 리뷰</p>
               <p onClick={() => setCommentModalOpen(true)}>작성한 댓글</p>
-              <p onClick={() => setLikedModalOpen(true)}>스크랩한 글 목록</p>
+              <p onClick={() => setLikedModalOpen(true)}>
+                스크랩한 글 목록
+              </p>
             </div>
           </div>
         </div>
@@ -200,6 +220,7 @@ const Mypage = () => {
         </button>
       </div>
 
+      {/* 내가 쓴 리뷰 모달 */}
       <Modal
         isOpen={isReviewModalOpen}
         onRequestClose={() => setReviewModalOpen(false)}
@@ -217,6 +238,7 @@ const Mypage = () => {
         <button onClick={() => setReviewModalOpen(false)}>닫기</button>
       </Modal>
 
+      {/* 작성한 댓글 모달 */}
       <Modal
         isOpen={isCommentModalOpen}
         onRequestClose={() => setCommentModalOpen(false)}
@@ -227,13 +249,14 @@ const Mypage = () => {
         <ul>
           {myComments.map((comment) => (
             <li key={comment.id} onClick={() => goToPost(comment.postId)}>
-              {comment.body}
+              {comment.content}
             </li>
           ))}
         </ul>
         <button onClick={() => setCommentModalOpen(false)}>닫기</button>
       </Modal>
 
+      {/* 스크랩한 글 목록 모달 */}
       <Modal
         isOpen={isLikedModalOpen}
         onRequestClose={() => setLikedModalOpen(false)}

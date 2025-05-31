@@ -17,6 +17,7 @@
   padding: 10px;
   border-radius: 6px;
 }
+
 .mypage-wrapper {
   display: flex;
   min-height: 100vh;
@@ -87,6 +88,7 @@
   flex: 1;
   padding: 60px;
 }
+
 .save-button {
   display: block;
   margin: 30px auto 0;
@@ -131,6 +133,7 @@
   cursor: pointer;
   border-bottom: 1px solid #ddd;
 }
+
 .profile-image-container {
   position: relative;
   width: 150px;
@@ -142,7 +145,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%; /* 원형 이미지 */
+  border-radius: 50%;
   border: 2px solid #ccc;
 }
 

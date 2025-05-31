@@ -8,7 +8,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -16,22 +16,22 @@ export default function RegisterPage() {
     nickname: "",
     email: "",
     name: "",
-    phonenumber: ""
+    phonenumber: "",
   });
 
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // 비밀번호 확인 검증
     if (formData.password !== formData.confirmPassword) {
       setError("비밀번호가 일치하지 않습니다.");
@@ -39,31 +39,30 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/api/user/join`, 
-        JSON.stringify({
+      const response = await axios.post(
+        `${API_URL}/api/user/join`,
+        {
           username: formData.username,
           password: formData.password,
           nickname: formData.nickname,
           email: formData.email,
           name: formData.name,
-          phonenumber: formData.phonenumber
-        }), 
+          phonenumber: formData.phonenumber,
+        },
         {
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          withCredentials: true
         }
       );
-      
+
       console.log("HTTP 상태 코드:", response.status);
       console.log("서버 응답:", response.data);
-      
+
       if (response.data.code === "SU") {
-        // 회원가입 성공 시 로그인 페이지로 이동
         navigate("/login");
       } else {
-        setError(response.data.message || "회원가입에 실패했습니다.");
+        setError(response.data.massage || "회원가입에 실패했습니다.");
       }
     } catch (err) {
       console.error("회원가입 에러 상세:", err);
