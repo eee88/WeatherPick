@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Map from "./pages/Map";
 import Mypage from "./pages/Mypage";
+import PlaceSearchTest from './pages/PlaceSearchTest';
 
 export default function App() {
   return (
@@ -33,6 +34,8 @@ export default function App() {
             {/* 장소 등록 페이지 */}
             <Route path="/place" element={<PlaceForm />} />
 
+            {/* 장소 검색 테스트 페이지 */}
+            <Route path="/test" element={<PlaceSearchTest />} />
             {/* 기타 페이지 */}
             <Route path="/map" element={<Map />} />
             <Route path="/mypage" element={<Mypage />} />

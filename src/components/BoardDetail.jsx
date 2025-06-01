@@ -14,18 +14,23 @@ const API_URL = process.env.REACT_APP_API_URL;
 const BoardDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [board, setBoard] = useState(null);
+  const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   // 게시글 불러오기
-  const getBoard = async () => {
+  const getPost = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(`${API_URL}/api/posts/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setBoard(response.data);
+      
+      if (response.data.code === "SU") {
+        setPost(response.data);
+      } else {
+        setError("게시글을 불러오는데 실패했습니다.");
+      }
     } catch (err) {
       console.error("BoardDetail: 불러오지 못했습니다.", err);
       setError("게시글을 불러오는 중 오류가 발생했습니다.");
@@ -35,13 +40,62 @@ const BoardDetail = () => {
   };
 
   useEffect(() => {
-    getBoard();
+    getPost();
   }, [id]);
+
+  // 좋아요 토글
+  const toggleFavorite = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        `${API_URL}/api/posts/${id}/favorite`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      if (response.data.code === "SU") {
+        setPost(prev => ({
+          ...prev,
+          favoriteCount: response.data.favoriteCount
+        }));
+      }
+    } catch (err) {
+      console.error("좋아요 처리 실패:", err);
+      alert("좋아요 처리에 실패했습니다.");
+    }
+  };
+
+  // 스크랩 토글
+  const toggleScrap = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.put(
+        `${API_URL}/api/posts/${id}/scrap`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      
+      if (response.data.code === "SU") {
+        setPost(prev => ({
+          ...prev,
+          scrapCount: response.data.scrapCount
+        }));
+      }
+    } catch (err) {
+      console.error("스크랩 처리 실패:", err);
+      alert("스크랩 처리에 실패했습니다.");
+    }
+  };
 
   // 버튼 액션
   const moveToEdit = () => {
     navigate(`/edit/${id}`);
   };
+
   const deletePost = async () => {
     const token = localStorage.getItem("token");
     if (window.confirm("게시글을 삭제하시겠습니까?")) {
@@ -57,6 +111,7 @@ const BoardDetail = () => {
       }
     }
   };
+
   const moveToBoard = () => {
     navigate("/board");
   };
@@ -81,7 +136,7 @@ const BoardDetail = () => {
   }
 
   // 게시글이 아예 없을 경우 (404 등)
-  if (!board) {
+  if (!post) {
     return (
       <div className="board-container">
         <p>존재하지 않는 게시글입니다.</p>
@@ -92,44 +147,53 @@ const BoardDetail = () => {
 
   return (
     <div className="board-container">
-      {/* ─── 게시글 상세 카드 ─── */}
+      {/* 게시글 상세 카드 */}
       <div className="board-detail">
-        <h1 className="board-detail-title">{board.title}</h1>
+        <h1 className="board-detail-title">{post.title}</h1>
         <div className="board-detail-info">
-          <span>작성자: {board.writer}</span>
+          <span>작성자: {post.writerNickname}</span>
           <span style={{ marginLeft: "1rem", color: "gray" }}>
-            작성일: {board.writingTime}
+            작성일: {post.writeDateTime}
           </span>
         </div>
         <hr />
 
+        {/* 장소 목록 */}
+        {post.placeList && post.placeList.length > 0 && (
+          <div className="board-detail-places">
+            <h3>방문 장소</h3>
+            <ul>
+              {post.placeList.map((place, index) => (
+                <li key={index}>📍 {place}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* 본문 내용 */}
         <div className="board-detail-content">
           <p style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}>
-            {board.body}
+            {post.content}
           </p>
         </div>
-        <hr />
+
+        {/* 통계 정보 */}
+        <div className="board-detail-stats">
+          <button onClick={toggleFavorite} className="stat-button">
+            ❤️ {post.favoriteCount}
+          </button>
+          <span>👁️ {post.viewCount}</span>
+          <button onClick={toggleScrap} className="stat-button">
+            📌 {post.scrapCount}
+          </button>
+          <span>💬 {post.commentCount}</span>
+        </div>
 
         {/* 버튼 그룹 */}
-        <div className="board-detail-buttons" style={{ marginTop: "1.5rem" }}>
-          <button onClick={moveToEdit} className="btn btn-primary">
-            수정
-          </button>
-          <button
-            onClick={deletePost}
-            className="btn btn-danger"
-            style={{ marginLeft: "0.5rem" }}
-          >
-            삭제
-          </button>
-          <button
-            onClick={moveToBoard}
-            className="btn btn-secondary"
-            style={{ marginLeft: "0.5rem" }}
-          >
-            목록
-          </button>
+        <div className="board-detail-buttons">
+          <button onClick={moveToBoard}>목록으로</button>
+          <button onClick={moveToEdit}>수정하기</button>
+          <button onClick={deletePost} style={{ color: "red" }}>삭제하기</button>
         </div>
       </div>
     </div>
