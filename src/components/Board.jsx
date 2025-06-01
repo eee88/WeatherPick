@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
 import "../Board.css";
 
 
@@ -16,7 +14,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 const Board = () => {
   const navigate = useNavigate();
-  const [boardList, setBoardList] = useState([]);     // “내가 쓴 게시글” 전체 배열
+  const [boardList, setBoardList] = useState([]);     // 리뷰 목록 배열
   const [searchTerm, setSearchTerm] = useState("");   // 검색어 상태
   const [currentPage, setCurrentPage] = useState(1);  // 현재 페이지 번호
   const [postsPerPage, setPostsPerPage] = useState(10);// 페이지당 출력 개수
@@ -28,23 +26,26 @@ const Board = () => {
   const getBoardList = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/api/posts/mine`, {
+      const response = await axios.get(`${API_URL}/api/posts/list`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      const data = Array.isArray(response.data) ? response.data : [];
-      setBoardList(data);
+      if (response.data.code === "SU") {
+        setBoardList(response.data.reviewListItems);
+      } else {
+        console.error("리뷰 목록을 불러오는데 실패했습니다.");
+        setBoardList([]);
+      }
     } catch (error) {
       console.error("불러오지 못함", error);
       setBoardList([]);  // 에러 시 빈 배열 처리
     }
   };
 
-  // 검색 필터링: 제목, 작성자, 본문 내용 포함 여부보는거거
+  // 검색 필터링: 제목, 작성자 포함 여부
   const filteredList = boardList.filter((board) =>
     board.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    board.writer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    board.body.toLowerCase().includes(searchTerm.toLowerCase())
+    board.writerNickname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // 페이징 계산
@@ -64,28 +65,10 @@ const Board = () => {
       <div className="search-bar">
         <input
           type="text"
-          placeholder="제목/작성자/내용 검색"
+          placeholder="제목/작성자 검색"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-      </div>
-
-      {/* Swiper 최신 게시물 미리보기 (최대 5개) */}
-      <div className="swiper-wrapper">
-        <Swiper spaceBetween={10} slidesPerView={1}>
-          {filteredList.slice(0, 5).map((board) => (
-            <SwiperSlide key={board.id}>
-              <div
-                className="slide-card"
-                onClick={() => navigate(`/board/${board.id}`)}
-              >
-                <h3>{board.title}</h3>
-                <p>{board.body?.slice(0, 80)}...</p>
-                <p className="writer">작성자: {board.writer}</p>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
       </div>
 
       {/* 글쓰기 버튼 */}
@@ -93,14 +76,23 @@ const Board = () => {
         <button onClick={Post}>글쓰기</button>
       </div>
 
-      {/* 게시물 목록 (페이지네이션 적용) */}
+      {/* 리뷰 목록 (페이지네이션 적용) */}
       <ul className="board-posts">
         {currentPosts.map((board) => (
-          <li key={board.id} className="board-post-item">
-            {/* 클릭 시 /board/{id} 로 이동 */}
-            <Link to={`/board/${board.id}`}>{board.title}</Link>
-            <span>작성자: {board.writer}</span>
-            <span> | 작성 시간: {board.writingTime}</span>
+          <li key={board.reviewId} className="board-post-item">
+            <Link to={`/board/${board.reviewId}`}>
+              <div className="post-title">{board.title}</div>
+              <div className="post-info">
+                <span>작성자: {board.writerNickname}</span>
+                <span>작성일: {board.writeDateTime}</span>
+                <div className="post-stats">
+                  <span>❤️ {board.favoriteCount}</span>
+                  <span>👁️ {board.viewCount}</span>
+                  <span>📌 {board.scrapCount}</span>
+                  <span>💬 {board.commentCount}</span>
+                </div>
+              </div>
+            </Link>
           </li>
         ))}
       </ul>

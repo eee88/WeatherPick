@@ -1,0 +1,36 @@
+.place-search-test {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.place-search-test h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.search-container {
+  margin-bottom: 30px;
+}
+
+.selected-place {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.selected-place h3 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.selected-place p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.selected-place strong {
+  color: #333;
+  margin-right: 10px;
+} 

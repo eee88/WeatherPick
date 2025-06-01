@@ -60,7 +60,7 @@ export default function RegisterPage() {
       console.log("서버 응답:", response.data);
 
       if (response.data.code === "SU") {
-        navigate("/login");
+        navigate("/");
       } else {
         setError(response.data.massage || "회원가입에 실패했습니다.");
       }

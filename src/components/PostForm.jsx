@@ -4,6 +4,7 @@ import axios from "axios";
 import "../PostForm.css";
 
 
+
 //  POST /api/posts               : 새 게시글(리뷰) 작성
 //    Body → { title, content, placeList: [장소1, 장소2, …] }
 
