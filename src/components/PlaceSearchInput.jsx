@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import "./PlaceSearchInput.css";
@@ -53,28 +53,22 @@ const SearchResultAddress = styled.div`
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
-const PlaceSearchInput = ({ onPlaceSelect }) => {
-  const [query, setQuery] = useState("조선대학교");
+const PlaceSearchInput = ({ onPlaceSelect, initialValue }) => {
+  const [searchTerm, setSearchTerm] = useState(initialValue || "");
   const [searchResults, setSearchResults] = useState([]);
-  const [selectedPlace, setSelectedPlace] = useState({
-    title: "",
-    address: "",
-  });
+  const [showResults, setShowResults] = useState(false);
 
-  // 컴포넌트 마운트 시 자동으로 검색
-  useEffect(() => {
-    handleSearch();
-  }, []);
+  const searchPlaces = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
 
-  // 장소 검색
-  const handleSearch = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `${API_URL}/api/naver/searchPlace`,
-        {
-          placeName: query,
-        },
+        { placeName: query },
         {
           headers: {
             "Content-Type": "application/json",
@@ -82,41 +76,36 @@ const PlaceSearchInput = ({ onPlaceSelect }) => {
           },
         }
       );
-      
-      console.log("검색 응답:", response.data); // 디버깅용 로그
-      
-      if (!response.data.places) {
-        console.log("검색 결과 없음");
-        setSearchResults([]);
-        return;
+
+      if (response.data && response.data.places) {
+        setSearchResults(response.data.places);
       }
-      
-      setSearchResults(response.data.places);
-      console.log("검색 결과 설정됨:", response.data.places); // 디버깅용 로그
     } catch (error) {
-      console.error("Error searching for place:", error);
-      if (error.response?.status === 401) {
-        alert("로그인이 필요합니다.");
-        // 로그인 페이지로 리다이렉트
-        window.location.href = "/";
-      } else if (error.response?.status === 404) {
-        alert("검색 결과가 없습니다.");
-      } else {
-        alert("장소 검색에 실패했습니다.");
-      }
+      console.error("Error searching places:", error);
       setSearchResults([]);
     }
   };
 
-  // 검색 결과 리스트 중 하나 선택
-  const handlePlaceSelection = (title, address) => {
-    setSelectedPlace({ title, address });
-    setQuery(title);
-    setSearchResults([]);
-    
-    if (onPlaceSelect) {
-      onPlaceSelect({ title, address });
-    }
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    searchPlaces(value);
+    setShowResults(true);
+  };
+
+  const handlePlaceSelect = (place) => {
+    setSearchTerm(place.title);
+    setShowResults(false);
+    // 모든 필수 정보를 포함하여 전달
+    onPlaceSelect({
+      title: place.title,
+      address: place.address,
+      roadAddress: place.roadAddress,
+      mapx: place.mapx,
+      mapy: place.mapy,
+      category: place.category || "",
+      link: place.link || ""
+    });
   };
 
   return (
@@ -125,36 +114,30 @@ const PlaceSearchInput = ({ onPlaceSelect }) => {
       <Search>
         <Input
           type="text"
-          value={query}
-          placeholder="장소명을 입력해주세요."
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          className="post-input-full"
+          placeholder="장소를 검색하세요"
+          value={searchTerm}
+          onChange={handleInputChange}
         />
-        <CheckBtn onClick={handleSearch}>검색</CheckBtn>
+        <CheckBtn onClick={() => searchPlaces(searchTerm)}>검색</CheckBtn>
         
-        <WrapSearchResult showResults={searchResults && searchResults.length > 0}>
-          {searchResults && searchResults.length > 0 && (
-            <>
-              {searchResults.map((result, index) => (
+        <WrapSearchResult showResults={showResults && searchResults.length > 0}>
+          {showResults && searchResults.length > 0 && (
+            <div className="search-results">
+              {searchResults.map((place, index) => (
                 <div
-                  onClick={() =>
-                    handlePlaceSelection(
-                      result.title.replace(/<[^>]*>/g, ""),
-                      result.address
-                    )
-                  }
                   key={index}
                   className="search-result-item"
+                  onClick={() => handlePlaceSelect(place)}
                 >
-                  <SearchResultTitle>
-                    {result.title.replace(/<[^>]*>/g, "")}
-                  </SearchResultTitle>
-                  <SearchResultAddress>
-                    {result.address}
-                  </SearchResultAddress>
+                  <div className="place-title">{place.title}</div>
+                  <div className="place-address">{place.address}</div>
+                  {place.roadAddress && (
+                    <div className="place-road-address">(도로명: {place.roadAddress})</div>
+                  )}
                 </div>
               ))}
-            </>
+            </div>
           )}
         </WrapSearchResult>
       </Search>

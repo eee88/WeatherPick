@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../Board.css";
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 
 
 //  GET /api/posts/{id}             : 특정 게시글 상세 조회
@@ -11,12 +12,18 @@ import "../Board.css";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
+// TM128 좌표를 위경도로 변환하는 함수
+const convertToLatLng = (x, y) => {
+  return [y / 10000000, x / 10000000];
+};
+
 const BoardDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showMap, setShowMap] = useState(false);
 
   // 게시글 불러오기
   const getPost = async () => {
@@ -116,6 +123,12 @@ const BoardDetail = () => {
     navigate("/board");
   };
 
+  const handleViewOnMap = () => {
+    if (post.places && post.places.length > 0) {
+      navigate('/map', { state: { places: post.places } });
+    }
+  };
+
   // 로딩 중
   if (loading) {
     return (
@@ -153,20 +166,43 @@ const BoardDetail = () => {
         <div className="board-detail-info">
           <span>작성자: {post.writerNickname}</span>
           <span style={{ marginLeft: "1rem", color: "gray" }}>
-            작성일: {post.writeDateTime}
+            작성일: {post.writeDate}
           </span>
         </div>
         <hr />
 
         {/* 장소 목록 */}
-        {post.placeList && post.placeList.length > 0 && (
+        {post.places && post.places.length > 0 && (
           <div className="board-detail-places">
             <h3>방문 장소</h3>
             <ul>
-              {post.placeList.map((place, index) => (
-                <li key={index}>📍 {place}</li>
+              {post.places.map((place, index) => (
+                <li key={index} className="place-item">
+                  <div className="place-title">
+                    <span className="place-number">{index + 1}</span> 📍 {place.title}
+                  </div>
+                  <div className="place-address">{place.address}</div>
+                  {place.roadAddress && (
+                    <div className="place-road-address">(도로명: {place.roadAddress})</div>
+                  )}
+                </li>
               ))}
             </ul>
+            <button 
+              onClick={handleViewOnMap}
+              style={{
+                backgroundColor: '#2d8cff',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginTop: '10px',
+                fontSize: '14px'
+              }}
+            >
+              지도에서 보기
+            </button>
           </div>
         )}
 

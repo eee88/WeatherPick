@@ -1,10 +1,20 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaMapMarkerAlt, FaBars } from "react-icons/fa";
+import Sidebar from '../Sidebar';
+import "./Map.css";
+import { useLocation } from "react-router-dom";
+
+// TM128 좌표를 위경도로 변환하는 함수
+const convertToLatLng = (x, y) => {
+  return [y / 10000000, x / 10000000];
+};
 
 const Map = () => {
   const [mapInstance, setMapInstance] = useState(null);
   const [currentMarker, setCurrentMarker] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [markers, setMarkers] = useState([]);
+  const location = useLocation();
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -13,7 +23,7 @@ const Map = () => {
     script.async = true;
     script.onload = () => {
       if (window.naver && window.naver.maps) {
-        const defaultCenter = new window.naver.maps.LatLng(37.5665, 126.9780);
+        const defaultCenter = new window.naver.maps.LatLng(35.1595454, 126.8526012); // 광주시청 좌표
         const map = new window.naver.maps.Map("map", {
           center: defaultCenter,
           zoom: 13,
@@ -24,7 +34,43 @@ const Map = () => {
       }
     };
     document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
   }, []);
+
+  // URL 파라미터에서 좌표 정보가 변경될 때마다 마커 업데이트
+  useEffect(() => {
+    if (mapInstance && location.state?.places) {
+      const places = location.state.places;
+      
+      // 기존 마커 제거
+      markers.forEach(marker => marker.setMap(null));
+      setMarkers([]);
+
+      // 모든 장소에 마커 생성
+      const newMarkers = places.map((place, index) => {
+        const [lat, lng] = convertToLatLng(place.mapx, place.mapy);
+        return new window.naver.maps.Marker({
+          position: new window.naver.maps.LatLng(lat, lng),
+          map: mapInstance,
+          title: place.title,
+          icon: {
+            content: `<div style="background-color: #2d8cff; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">${index + 1}</div>`,
+            anchor: new window.naver.maps.Point(12, 12)
+          }
+        });
+      });
+      setMarkers(newMarkers);
+
+      // 첫 번째 장소로 지도 중심 이동
+      if (places.length > 0) {
+        const [firstLat, firstLng] = convertToLatLng(places[0].mapx, places[0].mapy);
+        mapInstance.setCenter(new window.naver.maps.LatLng(firstLat, firstLng));
+      }
+    }
+  }, [location.state, mapInstance]);
 
   const handleCurrentLocationClick = () => {
     if (!mapInstance) return;
@@ -60,63 +106,10 @@ const Map = () => {
 
   return (
     <div style={{ display: "flex", height: "100vh", backgroundColor: "#f6f9fc" }}>
-      {/* 사이드바 */}
-      <div
-        style={{
-          width: sidebarOpen ? "260px" : "60px",
-          backgroundColor: "#fff",
-          borderRight: "1px solid #ddd",
-          padding: "16px 12px",
-          transition: "width 0.3s",
-          position: "relative",
-        }}
-      >
-        {/* 사이드바 토글 버튼 */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          style={{
-            position: "absolute",
-            top: "20px",
-            right: "-15px",
-            backgroundColor: "#2d8cff",
-            color: "#fff",
-            borderRadius: "50%",
-            width: "30px",
-            height: "30px",
-            border: "none",
-            cursor: "pointer",
-            boxShadow: "0 0 5px rgba(0,0,0,0.1)",
-            zIndex: 1000,
-          }}
-        >
-          <FaBars size={16} />
-        </button>
-
-        {/* 사이드바 콘텐츠 */}
-        {/* 사이드바 콘텐츠 */}
-{/* 사이드바 콘텐츠 */}
-{sidebarOpen && (
-  <div style={{ paddingLeft: "15px" }}>  {/* 여기 추가 */}
-    <h3 style={{ color: "#333", marginTop: "20px" }}>장소 카테고리</h3>
-    <div style={{ marginBottom: "10px" }}>
-      <button style={categoryBtnStyle}>카페</button>
-      <button style={categoryBtnStyle}>식당</button>
-      <button style={categoryBtnStyle}>공원</button>
-    </div>
-    <h4>장소 목록</h4>
-    <ul>
-      <li>장소 예시 1</li>
-      <li>장소 예시 2</li>
-      <li>장소 예시 3</li>
-    </ul>
-  </div>
-)}
-
-
-      </div>
-
+      <Sidebar />
+      
       {/* 지도 */}
-      <div style={{ flex: 1, position: "relative" }}>
+      <div style={{ flex: 1, position: "relative", marginLeft: "5rem" }}>
         <div id="map" style={{ width: "100%", height: "100%" }}></div>
 
         {/* 현재 위치 버튼 */}
@@ -141,18 +134,6 @@ const Map = () => {
       </div>
     </div>
   );
-};
-
-// 버튼 스타일 공통
-const categoryBtnStyle = {
-  display: "inline-block",
-  padding: "8px 12px",
-  margin: "4px",
-  backgroundColor: "#e6f0ff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontSize: "14px",
 };
 
 export default Map;

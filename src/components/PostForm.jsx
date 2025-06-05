@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../PostForm.css";
+import PlaceSearchInput from "./PlaceSearchInput";
 
 
 
@@ -15,13 +16,13 @@ const PostForm = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [places, setPlaces] = useState([""]);
+  const [places, setPlaces] = useState([]);
   const [error, setError] = useState("");
 
   // 장소 항목 추가
   const addPlace = () => {
     if (places.length < 5) {
-      setPlaces([...places, ""]);
+      setPlaces([...places, { title: "", address: "" }]);
     }
   };
 
@@ -31,16 +32,38 @@ const PostForm = () => {
     setPlaces(newPlaces);
   };
 
-  // 특정 인덱스 장소값 변경
-  const handlePlaceChange = (index, value) => {
+  // 장소 선택 핸들러
+  const handlePlaceSelect = (place, index) => {
     const newPlaces = [...places];
-    newPlaces[index] = value;
+    newPlaces[index] = place;
     setPlaces(newPlaces);
   };
 
   // 게시물 저장 요청
   const savePost = async (e) => {
     e.preventDefault();
+
+    // 제목 검증
+    if (!title.trim()) {
+      alert("제목을 입력해주세요.");
+      return;
+    }
+
+    // 내용 검증
+    if (!body.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+
+    // 장소 검증
+    const invalidPlaces = places.filter(place => 
+      !place.title || !place.address || !place.roadAddress || !place.mapx || !place.mapy
+    );
+    if (invalidPlaces.length > 0) {
+      alert("모든 장소의 필수 정보에 공백란이 있습니다.");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -48,7 +71,15 @@ const PostForm = () => {
         {
           title: title,
           content: body,
-          placeList: places.filter((p) => p.trim() !== ""),
+          places: places.map(place => ({
+            title: place.title,
+            address: place.address,
+            roadAddress: place.roadAddress,
+            mapx: place.mapx,
+            mapy: place.mapy,
+            category: place.category || "",
+            link: place.link || ""
+          }))
         },
         {
           headers: {
@@ -110,12 +141,9 @@ const PostForm = () => {
       </div>
       {places.map((place, index) => (
         <div key={index} className="post-row post-place-row">
-          <input
-            type="text"
-            className="post-input-full"
-            placeholder={`장소 ${index + 1}`}
-            value={place}
-            onChange={(e) => handlePlaceChange(index, e.target.value)}
+          <PlaceSearchInput
+            onPlaceSelect={(selectedPlace) => handlePlaceSelect(selectedPlace, index)}
+            initialValue={place.title}
           />
           {places.length > 1 && (
             <button

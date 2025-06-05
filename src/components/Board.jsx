@@ -83,8 +83,8 @@ const Board = () => {
             <Link to={`/board/${board.reviewId}`}>
               <div className="post-title">{board.title}</div>
               <div className="post-info">
-                <span>작성자: {board.writerNickname}</span>
-                <span>작성일: {board.writeDateTime}</span>
+                <span className="post-writer">작성자: {board.writerNickname}</span>
+                <span className="post-date">작성일: {board.writeDateTime}</span>
                 <div className="post-stats">
                   <span>❤️ {board.favoriteCount}</span>
                   <span>👁️ {board.viewCount}</span>
