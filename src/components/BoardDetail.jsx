@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../Board.css";
@@ -24,6 +24,9 @@ const BoardDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showMap, setShowMap] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const isFirstRender = useRef(true);
 
   // 게시글 불러오기
   const getPost = async () => {
@@ -46,8 +49,51 @@ const BoardDetail = () => {
     }
   };
 
+  // 댓글 목록 불러오기
+  const getComments = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_URL}/api/posts/${id}/comment-list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (response.data.code === "SU") {
+        setComments(response.data.commentList || []);
+      }
+    } catch (err) {
+      console.error("댓글을 불러오는데 실패했습니다:", err);
+    }
+  };
+
+  // 댓글 작성
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${API_URL}/api/posts/${id}/comment`,
+        { content: newComment },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setNewComment("");
+      getComments(); // 댓글 목록 새로고침
+    } catch (err) {
+      console.error("댓글 작성 실패:", err);
+      alert("댓글 작성에 실패했습니다.");
+    }
+  };
+
+  // 게시글 데이터 로드
   useEffect(() => {
-    getPost();
+    if (id && isFirstRender.current) {
+      getPost();
+      getComments();
+      isFirstRender.current = false;
+    }
   }, [id]);
 
   // 좋아요 토글
@@ -223,6 +269,37 @@ const BoardDetail = () => {
             📌 {post.scrapCount}
           </button>
           <span>💬 {post.commentCount}</span>
+        </div>
+
+        {/* 댓글 섹션 */}
+        <div className="board-detail-comments">
+          <h3>댓글</h3>
+          
+          {/* 댓글 작성 폼 */}
+          <form onSubmit={handleCommentSubmit} className="comment-form">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="댓글을 작성하세요..."
+              className="comment-input"
+            />
+            <button type="submit" className="comment-submit-btn">
+              댓글 작성
+            </button>
+          </form>
+
+          {/* 댓글 목록 */}
+          <div className="comment-list">
+            {comments.map((comment, index) => (
+              <div key={index} className="comment-item">
+                <div className="comment-header">
+                  <span className="comment-author">{comment.nickName}</span>
+                  <span className="comment-date">{comment.writeDateTime}</span>
+                </div>
+                <div className="comment-content">{comment.content}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 버튼 그룹 */}

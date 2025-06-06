@@ -79,8 +79,8 @@ const Board = () => {
       {/* 리뷰 목록 (페이지네이션 적용) */}
       <ul className="board-posts">
         {currentPosts.map((board) => (
-          <li key={board.reviewId} className="board-post-item">
-            <Link to={`/board/${board.reviewId}`}>
+          <li key={board.reviewPostId} className="board-post-item">
+            <Link to={`/board/${board.reviewPostId}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
               <div className="post-title">{board.title}</div>
               <div className="post-info">
                 <span className="post-writer">작성자: {board.writerNickname}</span>
