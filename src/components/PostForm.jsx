@@ -18,6 +18,39 @@ const PostForm = () => {
   const [body, setBody] = useState("");
   const [places, setPlaces] = useState([]);
   const [error, setError] = useState("");
+  const [images, setImages] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
+
+  // 이미지 파일 선택 핸들러
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    
+    // 파일 형식 검사
+    const validFiles = files.filter(file => 
+      file.type === 'image/jpeg' || file.type === 'image/png'
+    );
+
+    if (validFiles.length !== files.length) {
+      alert('JPG 또는 PNG 파일만 업로드 가능합니다.');
+      return;
+    }
+
+    // 미리보기 URL 생성
+    const newPreviewUrls = validFiles.map(file => URL.createObjectURL(file));
+    setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+    setImages(prev => [...prev, ...validFiles]);
+  };
+
+  // 이미지 삭제 핸들러
+  const handleRemoveImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => {
+      const newUrls = [...prev];
+      URL.revokeObjectURL(newUrls[index]);
+      return newUrls.filter((_, i) => i !== index);
+    });
+  };
 
   // 장소 항목 추가
   const addPlace = () => {
@@ -55,32 +88,57 @@ const PostForm = () => {
       return;
     }
 
-    // 장소 검증
-    const invalidPlaces = places.filter(place => 
-      !place.title || !place.address || !place.roadAddress || !place.mapx || !place.mapy
-    );
-    if (invalidPlaces.length > 0) {
-      alert("모든 장소의 필수 정보에 공백란이 있습니다.");
-      return;
-    }
-
     try {
       const token = localStorage.getItem("token");
+      
+      // 이미지 파일 업로드
+      const uploadedUrls = [];
+      for (const image of images) {
+        const imageFormData = new FormData();
+        imageFormData.append("file", image);
+        
+        
+        const uploadResponse = await axios.post(
+          `${API_URL}/file/upload`,
+          imageFormData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        
+        // URL이 직접 문자열로 오는 경우 처리
+        const imageUrl = typeof uploadResponse.data === 'string' 
+          ? uploadResponse.data 
+          : uploadResponse.data.url;
+        
+        if (imageUrl) {
+          uploadedUrls.push(imageUrl);
+        }
+      }
+
+      // 게시글 작성 요청
+      const postData = {
+        title,
+        content: body,
+        places: places.map(place => ({
+          title: place.title,
+          address: place.address,
+          roadAddress: place.roadAddress,
+          mapx: place.mapx,
+          mapy: place.mapy,
+          category: place.category || "",
+          link: place.link || ""
+        })),
+        images: uploadedUrls
+      };
+
+  
       const response = await axios.post(
         `${API_URL}/api/posts`,
-        {
-          title: title,
-          content: body,
-          places: places.map(place => ({
-            title: place.title,
-            address: place.address,
-            roadAddress: place.roadAddress,
-            mapx: place.mapx,
-            mapy: place.mapy,
-            category: place.category || "",
-            link: place.link || ""
-          }))
-        },
+        postData,
         {
           headers: {
             "Content-Type": "application/json",
@@ -156,6 +214,38 @@ const PostForm = () => {
           )}
         </div>
       ))}
+
+      {/* ─── 이미지 업로드 ─── */}
+      <div className="post-row">
+        <label className="post-label-block">이미지</label>
+        <div className="image-upload-container">
+          <input
+            type="file"
+            accept="image/jpeg,image/png"
+            multiple
+            onChange={handleImageChange}
+            className="image-upload-input"
+            id="image-upload"
+          />
+          <label htmlFor="image-upload" className="image-upload-label">
+            + 이미지 추가
+          </label>
+          <div className="image-preview-container">
+            {previewUrls.map((url, index) => (
+              <div key={index} className="image-preview-item">
+                <img src={url} alt={`미리보기 ${index + 1}`} />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage(index)}
+                  className="image-remove-btn"
+                >
+                  X
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* ─── 내용 입력 ─── */}
       <div className="post-row">

@@ -350,7 +350,7 @@
 }
 
 .comment-submit-btn:hover {
-  background-color: #1a7ae8;
+  background-color: #1a7ad9;
 }
 
 .comment-list {
@@ -559,4 +559,131 @@
 
 .place-search-result-item:last-child {
   border-bottom: none;
+}
+
+/* 이미지 섹션 스타일 */
+.board-detail-images {
+  margin: 2rem 0;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.board-detail-images h3 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.image-item {
+  position: relative;
+  padding-bottom: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.image-item img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.image-item:hover img {
+  transform: scale(1.05);
+}
+
+.board-list {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.board-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 15px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.board-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.board-item-content {
+  flex: 1;
+  margin-right: 20px;
+  min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+.board-item-content h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.board-item-excerpt {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 0.9rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+.board-item-meta {
+  display: flex;
+  gap: 15px;
+  color: #888;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+
+.board-item-stats {
+  display: flex;
+  gap: 15px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.board-item-stats span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.board-item-thumbnail {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.board-item-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
