@@ -262,13 +262,13 @@ const BoardDetail = () => {
         {/* 통계 정보 */}
         <div className="board-detail-stats">
           <button onClick={toggleFavorite} className="stat-button">
-            ❤️ {post.favoriteCount}
+            ❤️ {post.favoriteCount || 0}
           </button>
-          <span>👁️ {post.viewCount}</span>
+          <span>👁️ {post.viewCount || 0}</span>
           <button onClick={toggleScrap} className="stat-button">
-            📌 {post.scrapCount}
+            📌 {post.scrapCount || 0}
           </button>
-          <span>💬 {post.commentCount}</span>
+          <span>💬 {post.commentCount || 0}</span>
         </div>
 
         {/* 댓글 섹션 */}
