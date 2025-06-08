@@ -18,6 +18,7 @@ const Board = () => {
   const [searchTerm, setSearchTerm] = useState("");   // 검색어 상태
   const [currentPage, setCurrentPage] = useState(1);  // 현재 페이지 번호
   const [postsPerPage, setPostsPerPage] = useState(10);// 페이지당 출력 개수
+  const [userProfiles, setUserProfiles] = useState({});
 
   useEffect(() => {
     getBoardList();  // 컴포넌트 마운트 혹은 currentPage/postsPerPage 변경 시 갱신
@@ -31,7 +32,28 @@ const Board = () => {
       });
       
       if (response.data.code === "SU") {
-        setBoardList(response.data.reviewListItems);
+        // 각 게시글의 이미지 URL 가져오기
+        const postsWithImages = await Promise.all(
+          response.data.reviewListItems.map(async (post) => {
+            try {
+              const imageResponse = await axios.get(`${API_URL}/file/post/${post.reviewPostId}`);
+              return {
+                ...post,
+                imageUrls: imageResponse.data.imageUrls || []
+              };
+            } catch (error) {
+              console.error(`이미지 로드 실패 (게시글 ID: ${post.reviewPostId}):`, error);
+              return {
+                ...post,
+                imageUrls: []
+              };
+            }
+          })
+        );
+
+        setBoardList(postsWithImages);
+
+        
       } else {
         console.error("리뷰 목록을 불러오는데 실패했습니다.");
         setBoardList([]);
@@ -77,25 +99,58 @@ const Board = () => {
       </div>
 
       {/* 리뷰 목록 (페이지네이션 적용) */}
-      <ul className="board-posts">
-        {currentPosts.map((board) => (
-          <li key={board.reviewPostId} className="board-post-item">
-            <Link to={`/board/${board.reviewPostId}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
-              <div className="post-title">{board.title}</div>
-              <div className="post-info">
-                <span className="post-writer">작성자: {board.writerNickname}</span>
-                <span className="post-date">작성일: {board.writeDateTime}</span>
-                <div className="post-stats">
-                  <span>❤️ {board.favoriteCount}</span>
-                  <span>👁️ {board.viewCount}</span>
-                  <span>📌 {board.scrapCount}</span>
-                  <span>💬 {board.commentCount}</span>
-                </div>
+      <div className="board-list">
+        {currentPosts.map((post) => (
+          <div
+            key={post.reviewPostId}
+            className="board-item"
+            onClick={() => navigate(`/board/${post.reviewPostId}`)}
+          >
+            <div className="board-item-content">
+              <div className="board-item-header">
+                <img 
+                  src={post.writerProfileImage || "/weatherPickMy.png"} 
+                  alt="프로필" 
+                  className="writer-profile-image"
+                />
+                <h3>{post.title}</h3>
               </div>
-            </Link>
-          </li>
+              <p className="board-item-excerpt">{post.content}</p>
+              <div className="board-item-meta">
+                <span>작성자: {post.writerNickname}</span>
+                <span>작성일: {post.writeDateTime}</span>
+              </div>
+              <div className="board-item-stats">
+                <span>❤️ {post.favoriteCount}</span>
+                <span>👁️ {post.viewCount}</span>
+                <span>📌 {post.scrapCount}</span>
+                <span>💬 {post.commentCount}</span>
+              </div>
+            </div>
+            {post.imageUrls && post.imageUrls.length > 0 && (
+              <div className="board-item-thumbnail">
+                {post.imageUrls.slice(0, 3).map((image, index) => (
+                  <div
+                    key={index}
+                    className="thumbnail-image-wrapper"
+                    style={{
+                      transform: `translateX(${(2 - index) * 100 + -200}px)`,
+                      zIndex: index + 1
+                    }}
+                  >
+                    <img src={image} alt={`Thumbnail ${index + 1}`} />
+                  </div>
+                ))}
+                {post.imageUrls.length > 3 && (
+                  <div className="thumbnail-overlay">
+                    +{post.imageUrls.length - 3}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         ))}
-      </ul>
+      </div>
 
       {/* 페이징 버튼 */}
       <div className="board-pagination">

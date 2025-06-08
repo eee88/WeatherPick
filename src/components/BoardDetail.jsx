@@ -208,14 +208,20 @@ const BoardDetail = () => {
     <div className="board-container">
       {/* 게시글 상세 카드 */}
       <div className="board-detail">
-        <h1 className="board-detail-title">{post.title}</h1>
-        <div className="board-detail-info">
-          <span>작성자: {post.writerNickname}</span>
-          <span style={{ marginLeft: "1rem", color: "gray" }}>
-            작성일: {post.writeDate}
-          </span>
+        <div className="board-detail-header">
+          <h2>{post.title}</h2>
+          <div className="board-detail-meta">
+            <div className="writer-info">
+              <img 
+                src={post.writerProfileImage || "https://via.placeholder.com/30"} 
+                alt="프로필" 
+                className="writer-profile-image"
+              />
+              <span>작성자: {post.writerNickname}</span>
+            </div>
+            <span>작성일: {post.writeDate}</span>
+          </div>
         </div>
-        <hr />
 
         {/* 장소 목록 */}
         {post.places && post.places.length > 0 && (
@@ -252,11 +258,22 @@ const BoardDetail = () => {
           </div>
         )}
 
-        {/* 본문 내용 */}
+        {/* 이미지 섹션을 여기로 이동 */}
+        {post.images && post.images.length > 0 && (
+          <div className="board-detail-images">
+            <h3>첨부된 이미지</h3>
+            <div className="image-grid">
+              {post.images.map((image, index) => (
+                <div key={index} className="image-item">
+                  <img src={image} alt={`첨부된 이미지 ${index + 1}`} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="board-detail-content">
-          <p style={{ whiteSpace: "pre-wrap", lineHeight: "1.6" }}>
-            {post.content}
-          </p>
+          <p>{post.content}</p>
         </div>
 
         {/* 통계 정보 */}
@@ -293,7 +310,14 @@ const BoardDetail = () => {
             {comments.map((comment, index) => (
               <div key={index} className="comment-item">
                 <div className="comment-header">
+                  <div className="comment-author-info">
+                    <img 
+                      src={comment.profileImage || "/weatherPickMy.png"} 
+                      alt="프로필" 
+                      className="comment-profile-image"
+                    />
                   <span className="comment-author">{comment.nickName}</span>
+                  </div>
                   <span className="comment-date">{comment.writeDateTime}</span>
                 </div>
                 <div className="comment-content">{comment.content}</div>

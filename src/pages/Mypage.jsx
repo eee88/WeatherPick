@@ -12,65 +12,60 @@ const API_URL = process.env.REACT_APP_API_URL;
 const Mypage = () => {
   const navigate = useNavigate();
 
-  // 이전 레이아웃에 맞춘 상태값들 (name, email, username, phone, password, profileImage)
+  // 이전 레이아웃에 맞춘 상태값들 (name, email, username, phone, password, confirmPassword, profileImage)
   const [userInfo, setUserInfo] = useState({
     name: "",
     email: "",
     username: "",
     phone: "",
     password: "",
+    confirmPassword: "", // 비밀번호 확인 필드 추가
     profileImage: null,
   });
 
   const [preview, setPreview] = useState(null);
-  const [myReviews, setMyReviews] = useState([]);
-  const [myComments, setMyComments] = useState([]);
-  const [likedPosts, setLikedPosts] = useState([]);
 
   const [isReviewModalOpen, setReviewModalOpen] = useState(false);
   const [isCommentModalOpen, setCommentModalOpen] = useState(false);
   const [isLikedModalOpen, setLikedModalOpen] = useState(false);
 
-  // 내가 쓴 게시글, 댓글, 스크랩한 글을 한 번에 불러오는 함수
-  const fetchUserActivity = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const [resPosts, resComments, resScraps] = await Promise.all([
-        axios.get(`${API_URL}/api/posts/mine`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${API_URL}/api/comments/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${API_URL}/api/posts/scraps`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
-
-      setMyReviews(Array.isArray(resPosts.data) ? resPosts.data : []);
-      setMyComments(Array.isArray(resComments.data) ? resComments.data : []);
-      setLikedPosts(Array.isArray(resScraps.data) ? resScraps.data : []);
-    } catch (error) {
-      console.error("활동 내역 불러오기 실패", error);
-    }
-  };
+  const [passwordError, setPasswordError] = useState(""); // 비밀번호 오류 메시지 상태 추가
 
   // 내가 쓴 유저 정보 (username, nickname, profileImage 등) 불러오는 함수
   const fetchUserInfo = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${API_URL}/api/user`, {
-        headers: { Authorization: `Bearer ${token}` },
+      if (!token) {
+        console.error("토큰이 없습니다.");
+        return;
+      }
+
+      // JWT 토큰에서 username 추출
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const username = payload.sub;  // sub 필드에서 username 추출
+      if (!username) {
+        console.error("토큰에서 username을 찾을 수 없습니다.");
+        return;
+      }
+
+      const res = await axios.get(`${API_URL}/api/user/${username}`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
-      // res.data 예시: { code, massage, username, nickname, profileImage }
-      setUserInfo({
-        name: res.data.name || "",
-        email: res.data.email || "",
-        username: res.data.username,
-        phone: res.data.phonenumber || "",
-        password: "", // 비밀번호는 보안 상 초기값으로 비워둡니다.
-        profileImage: res.data.profileImage,
-      });
+      
+      if (res.data.code === 'SU') {
+        setUserInfo({
+          name: res.data.nickname || "",
+          email: res.data.email || "",
+          username: res.data.username,
+          phone: res.data.phonenumber || "",
+          password: "", // 비밀번호는 보안 상 초기값으로 비워둡니다.
+          confirmPassword: "", // 비밀번호 확인 필드 초기값으로 비워둡니다.
+          profileImage: res.data.profileImage,
+        });
+      }
     } catch (err) {
       console.error("유저 정보 불러오기 실패", err);
     }
@@ -78,12 +73,28 @@ const Mypage = () => {
 
   useEffect(() => {
     fetchUserInfo();
-    fetchUserActivity();
   }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserInfo((prev) => ({ ...prev, [name]: value }));
+    
+    // 비밀번호 확인 로직
+    if (name === "password" || name === "confirmPassword") {
+      if (name === "password") {
+        if (value !== userInfo.confirmPassword && userInfo.confirmPassword !== "") {
+          setPasswordError("비밀번호가 일치하지 않습니다.");
+        } else {
+          setPasswordError("");
+        }
+      } else {
+        if (value !== userInfo.password) {
+          setPasswordError("비밀번호가 일치하지 않습니다.");
+        } else {
+          setPasswordError("");
+        }
+      }
+    }
   };
 
   const handleImageChange = (e) => {
@@ -97,20 +108,27 @@ const Mypage = () => {
   // 프로필/닉네임/이메일/전화번호/비밀번호 변경 시 처리
   const handleUpdate = async () => {
     try {
+      // 비밀번호 일치 여부 확인
+      if (userInfo.password !== userInfo.confirmPassword) {
+        alert("비밀번호가 일치하지 않습니다.");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("username", userInfo.username);
-      formData.append("nickname", userInfo.name); // 이전 레이아웃은 name 필드를 nickname처럼 썼었습니다.
+      formData.append("nickname", userInfo.name);
       formData.append("email", userInfo.email);
       formData.append("phonenumber", userInfo.phone);
       if (userInfo.password.trim() !== "") {
         formData.append("password", userInfo.password);
       }
+      // 프로필 이미지가 File 객체인 경우에만 추가
       if (userInfo.profileImage instanceof File) {
         formData.append("profileImage", userInfo.profileImage);
       }
 
       const token = localStorage.getItem("token");
-      await axios.put(
+      const response = await axios.put(
         `${API_URL}/api/user/${userInfo.username}`,
         formData,
         {
@@ -120,30 +138,27 @@ const Mypage = () => {
           },
         }
       );
-      alert("정보가 수정되었습니다.");
+
+      if (response.data.code === 'SU') {
+        // 업데이트된 정보로 상태 갱신
+        setUserInfo(prev => ({
+          ...prev,
+          nickname: response.data.nickname,
+          email: response.data.email,
+          phone: response.data.phonenumber,
+          profileImage: response.data.profileImage,
+          password: "", // 비밀번호 필드 초기화
+          confirmPassword: "" // 비밀번호 확인 필드 초기화
+        }));
+        alert("정보가 성공적으로 수정되었습니다.");
+      }
     } catch (error) {
       console.error("정보 수정 실패", error);
-      alert("수정 실패");
+      alert("정보 수정에 실패했습니다.");
     }
   };
 
-  // 게시글 상세 페이지로 이동
-  const goToPost = async (postId) => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await axios.get(
-        `${API_URL}/api/posts/${postId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.status === 200) {
-        navigate(`/board/${postId}`);
-      } else {
-        throw new Error();
-      }
-    } catch {
-      alert("해당 게시물이 삭제되었거나 존재하지 않습니다.");
-    }
-  };
+  
 
   return (
     <div className="mypage-wrapper">
@@ -173,37 +188,91 @@ const Mypage = () => {
         <div className="profile-section">
           <div className="info-section">
             <div className="left-inputs">
-              <input
-                name="name"
-                value={userInfo.name}
-                onChange={handleInputChange}
-                placeholder="이름"
-              />
-              <input
-                name="email"
-                value={userInfo.email}
-                onChange={handleInputChange}
-                placeholder="이메일"
-              />
-              <input
-                name="username"
-                value={userInfo.username}
-                onChange={handleInputChange}
-                placeholder="아이디"
-              />
-              <input
-                name="phone"
-                value={userInfo.phone}
-                onChange={handleInputChange}
-                placeholder="전화번호"
-              />
-              <input
-                name="password"
-                type="password"
-                value={userInfo.password}
-                onChange={handleInputChange}
-                placeholder="비밀번호"
-              />
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+                  닉네임
+                </label>
+                <input
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  id="name"
+                  name="name"
+                  value={userInfo.name}
+                  onChange={handleInputChange}
+                  placeholder="닉네임"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+                  이메일
+                </label>
+                <input
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  id="email"
+                  name="email"
+                  value={userInfo.email}
+                  onChange={handleInputChange}
+                  placeholder="이메일"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
+                  아이디
+                </label>
+                <input
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100"
+                  id="username"
+                  type="text"
+                  value={userInfo.username}
+                  disabled
+                  readOnly
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phone">
+                  전화번호
+                </label>
+                <input
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  id="phone"
+                  name="phone"
+                  value={userInfo.phone}
+                  onChange={handleInputChange}
+                  placeholder="전화번호"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+                  새 비밀번호
+                </label>
+                <input
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={userInfo.password}
+                  onChange={handleInputChange}
+                  placeholder="새 비밀번호"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmPassword">
+                  새 비밀번호 확인
+                </label>
+                <input
+                  className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+                    passwordError ? "border-red-500" : ""
+                  }`}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={userInfo.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="새 비밀번호 확인"
+                />
+                {passwordError && (
+                  <p className="text-red-500 text-xs italic mt-1">{passwordError}</p>
+                )}
+              </div>
             </div>
             <div className="right-links">
               <p onClick={() => setReviewModalOpen(true)}>내가 쓴 리뷰</p>
@@ -228,13 +297,6 @@ const Mypage = () => {
         overlayClassName="modal-overlay"
       >
         <h2>내 리뷰</h2>
-        <ul>
-          {myReviews.map((review) => (
-            <li key={review.id} onClick={() => goToPost(review.id)}>
-              {review.title}
-            </li>
-          ))}
-        </ul>
         <button onClick={() => setReviewModalOpen(false)}>닫기</button>
       </Modal>
 
@@ -246,13 +308,7 @@ const Mypage = () => {
         overlayClassName="modal-overlay"
       >
         <h2>내 댓글</h2>
-        <ul>
-          {myComments.map((comment) => (
-            <li key={comment.id} onClick={() => goToPost(comment.postId)}>
-              {comment.content}
-            </li>
-          ))}
-        </ul>
+        
         <button onClick={() => setCommentModalOpen(false)}>닫기</button>
       </Modal>
 
@@ -264,13 +320,7 @@ const Mypage = () => {
         overlayClassName="modal-overlay"
       >
         <h2>추천한 글</h2>
-        <ul>
-          {likedPosts.map((post) => (
-            <li key={post.id} onClick={() => goToPost(post.id)}>
-              {post.title}
-            </li>
-          ))}
-        </ul>
+        
         <button onClick={() => setLikedModalOpen(false)}>닫기</button>
       </Modal>
     </div>
