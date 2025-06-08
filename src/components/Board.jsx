@@ -18,6 +18,7 @@ const Board = () => {
   const [searchTerm, setSearchTerm] = useState("");   // 검색어 상태
   const [currentPage, setCurrentPage] = useState(1);  // 현재 페이지 번호
   const [postsPerPage, setPostsPerPage] = useState(10);// 페이지당 출력 개수
+  const [userProfiles, setUserProfiles] = useState({});
 
   useEffect(() => {
     getBoardList();  // 컴포넌트 마운트 혹은 currentPage/postsPerPage 변경 시 갱신
@@ -51,6 +52,8 @@ const Board = () => {
         );
 
         setBoardList(postsWithImages);
+
+        
       } else {
         console.error("리뷰 목록을 불러오는데 실패했습니다.");
         setBoardList([]);
@@ -104,7 +107,14 @@ const Board = () => {
             onClick={() => navigate(`/board/${post.reviewPostId}`)}
           >
             <div className="board-item-content">
-              <h3>{post.title}</h3>
+              <div className="board-item-header">
+                <img 
+                  src={post.writerProfileImage || "/weatherPickMy.png"} 
+                  alt="프로필" 
+                  className="writer-profile-image"
+                />
+                <h3>{post.title}</h3>
+              </div>
               <p className="board-item-excerpt">{post.content}</p>
               <div className="board-item-meta">
                 <span>작성자: {post.writerNickname}</span>
@@ -119,7 +129,23 @@ const Board = () => {
             </div>
             {post.imageUrls && post.imageUrls.length > 0 && (
               <div className="board-item-thumbnail">
-                <img src={post.imageUrls[0]} alt="게시글 썸네일" />
+                {post.imageUrls.slice(0, 3).map((image, index) => (
+                  <div
+                    key={index}
+                    className="thumbnail-image-wrapper"
+                    style={{
+                      transform: `translateX(${(2 - index) * 100 + -200}px)`,
+                      zIndex: index + 1
+                    }}
+                  >
+                    <img src={image} alt={`Thumbnail ${index + 1}`} />
+                  </div>
+                ))}
+                {post.imageUrls.length > 3 && (
+                  <div className="thumbnail-overlay">
+                    +{post.imageUrls.length - 3}
+                  </div>
+                )}
               </div>
             )}
           </div>

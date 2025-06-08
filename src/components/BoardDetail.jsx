@@ -211,7 +211,14 @@ const BoardDetail = () => {
         <div className="board-detail-header">
           <h2>{post.title}</h2>
           <div className="board-detail-meta">
-            <span>작성자: {post.writerNickname}</span>
+            <div className="writer-info">
+              <img 
+                src={post.writerProfileImage || "https://via.placeholder.com/30"} 
+                alt="프로필" 
+                className="writer-profile-image"
+              />
+              <span>작성자: {post.writerNickname}</span>
+            </div>
             <span>작성일: {post.writeDate}</span>
           </div>
         </div>
@@ -303,7 +310,14 @@ const BoardDetail = () => {
             {comments.map((comment, index) => (
               <div key={index} className="comment-item">
                 <div className="comment-header">
+                  <div className="comment-author-info">
+                    <img 
+                      src={comment.profileImage || "/weatherPickMy.png"} 
+                      alt="프로필" 
+                      className="comment-profile-image"
+                    />
                   <span className="comment-author">{comment.nickName}</span>
+                  </div>
                   <span className="comment-date">{comment.writeDateTime}</span>
                 </div>
                 <div className="comment-content">{comment.content}</div>
