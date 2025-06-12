@@ -1,10 +1,25 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaMapMarkerAlt, FaBars } from "react-icons/fa";
+import Sidebar from "../Sidebar";
+import "./Map.css";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
+
+// TM128 좌표를 위경도로 변환하는 함수
+const convertToLatLng = (x, y) => {
+  return [y / 10000000, x / 10000000];
+};
 
 const Map = () => {
   const [mapInstance, setMapInstance] = useState(null);
   const [currentMarker, setCurrentMarker] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [markers, setMarkers] = useState([]);
+  const location = useLocation();
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -13,7 +28,10 @@ const Map = () => {
     script.async = true;
     script.onload = () => {
       if (window.naver && window.naver.maps) {
-        const defaultCenter = new window.naver.maps.LatLng(37.5665, 126.9780);
+        const defaultCenter = new window.naver.maps.LatLng(
+          35.1595454,
+          126.8526012
+        ); // 광주시청 좌표
         const map = new window.naver.maps.Map("map", {
           center: defaultCenter,
           zoom: 13,
@@ -24,7 +42,101 @@ const Map = () => {
       }
     };
     document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
   }, []);
+
+  // URL 파라미터에서 좌표 정보가 변경될 때마다 마커 업데이트
+  useEffect(() => {
+    if (mapInstance && location.state?.places) {
+      const places = location.state.places;
+
+      // 기존 마커 제거
+      markers.forEach((marker) => marker.setMap(null));
+      setMarkers([]);
+
+      // 모든 장소에 마커 생성
+      const newMarkers = places.map((place, index) => {
+        const [lat, lng] = convertToLatLng(place.mapx, place.mapy);
+        return new window.naver.maps.Marker({
+          position: new window.naver.maps.LatLng(lat, lng),
+          map: mapInstance,
+          title: place.title,
+          icon: {
+            content: `<div style="background-color: #E87678; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">${
+              index + 1
+            }</div>`,
+            anchor: new window.naver.maps.Point(12, 12),
+          },
+        });
+      });
+      setMarkers(newMarkers);
+
+      // 첫 번째 장소로 지도 중심 이동
+      if (places.length > 0) {
+        const [firstLat, firstLng] = convertToLatLng(
+          places[0].mapx,
+          places[0].mapy
+        );
+        mapInstance.setCenter(new window.naver.maps.LatLng(firstLat, firstLng));
+      }
+    }
+  }, [location.state, mapInstance]);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim() || !mapInstance) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${API_URL}/api/naver/searchPlace`,
+        { placeName: searchQuery },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data && response.data.places) {
+        setSearchResults(response.data.places);
+
+        // 첫 번째 검색 결과로 지도 이동
+        const firstResult = response.data.places[0];
+        const [lat, lng] = convertToLatLng(firstResult.mapx, firstResult.mapy);
+        const position = new window.naver.maps.LatLng(lat, lng);
+        mapInstance.setCenter(position);
+
+        // 기존 마커 제거
+        if (currentMarker) {
+          currentMarker.setMap(null);
+        }
+
+        // 새로운 마커 생성
+        const marker = new window.naver.maps.Marker({
+          position: position,
+          map: mapInstance,
+          title: firstResult.title,
+        });
+
+        // 인포윈도우 생성
+        const infowindow = new window.naver.maps.InfoWindow({
+          content: `<div style="padding:5px;font-size:12px;">
+            <strong>${firstResult.title}</strong><br/>
+            ${firstResult.address}
+          </div>`,
+        });
+        infowindow.open(mapInstance, marker);
+
+        setCurrentMarker(marker);
+      }
+    } catch (error) {
+      console.error("검색 중 오류 발생:", error);
+    }
+  };
 
   const handleCurrentLocationClick = () => {
     if (!mapInstance) return;
@@ -59,64 +171,53 @@ const Map = () => {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", backgroundColor: "#f6f9fc" }}>
-      {/* 사이드바 */}
-      <div
-        style={{
-          width: sidebarOpen ? "260px" : "60px",
-          backgroundColor: "#fff",
-          borderRight: "1px solid #ddd",
-          padding: "16px 12px",
-          transition: "width 0.3s",
-          position: "relative",
-        }}
-      >
-        {/* 사이드바 토글 버튼 */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
+    <div
+      style={{ display: "flex", height: "100vh", backgroundColor: "#f6f9fc" }}
+    >
+      <Sidebar />
+
+      {/* 지도 */}
+      <div style={{ flex: 1, position: "relative", marginLeft: "5rem" }}>
+        {/* 검색창 추가 */}
+        <div
           style={{
             position: "absolute",
             top: "20px",
-            right: "-15px",
-            backgroundColor: "#2d8cff",
-            color: "#fff",
-            borderRadius: "50%",
-            width: "30px",
-            height: "30px",
-            border: "none",
-            cursor: "pointer",
-            boxShadow: "0 0 5px rgba(0,0,0,0.1)",
+            left: "80px",
             zIndex: 1000,
+            display: "flex",
+            gap: "8px",
           }}
         >
-          <FaBars size={16} />
-        </button>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+            placeholder="장소를 검색하세요"
+            style={{
+              padding: "8px 12px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              width: "300px",
+              fontSize: "14px",
+            }}
+          />
+          <button
+            onClick={handleSearch}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "#E87678",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+            }}
+          >
+            검색
+          </button>
+        </div>
 
-        {/* 사이드바 콘텐츠 */}
-        {/* 사이드바 콘텐츠 */}
-{/* 사이드바 콘텐츠 */}
-{sidebarOpen && (
-  <div style={{ paddingLeft: "15px" }}>  {/* 여기 추가 */}
-    <h3 style={{ color: "#333", marginTop: "20px" }}>장소 카테고리</h3>
-    <div style={{ marginBottom: "10px" }}>
-      <button style={categoryBtnStyle}>카페</button>
-      <button style={categoryBtnStyle}>식당</button>
-      <button style={categoryBtnStyle}>공원</button>
-    </div>
-    <h4>장소 목록</h4>
-    <ul>
-      <li>장소 예시 1</li>
-      <li>장소 예시 2</li>
-      <li>장소 예시 3</li>
-    </ul>
-  </div>
-)}
-
-
-      </div>
-
-      {/* 지도 */}
-      <div style={{ flex: 1, position: "relative" }}>
         <div id="map" style={{ width: "100%", height: "100%" }}></div>
 
         {/* 현재 위치 버튼 */}
@@ -138,21 +239,73 @@ const Map = () => {
         >
           <FaMapMarkerAlt size={20} color="#2d8cff" />
         </button>
+
+        {/* 검색 결과 리스트 */}
+        {searchResults.length > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              top: "80px",
+              left: "80px",
+              backgroundColor: "white",
+              borderRadius: "8px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              maxHeight: "300px",
+              overflowY: "auto",
+              zIndex: 1000,
+              width: "300px",
+            }}
+          >
+            {searchResults.map((result, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  const [lat, lng] = convertToLatLng(result.mapx, result.mapy);
+                  const position = new window.naver.maps.LatLng(lat, lng);
+                  mapInstance.setCenter(position);
+
+                  // 기존 마커 제거
+                  if (currentMarker) {
+                    currentMarker.setMap(null);
+                  }
+
+                  // 새로운 마커 생성
+                  const marker = new window.naver.maps.Marker({
+                    position: position,
+                    map: mapInstance,
+                    title: result.title,
+                  });
+
+                  // 인포윈도우 생성
+                  const infowindow = new window.naver.maps.InfoWindow({
+                    content: `<div style="padding:5px;font-size:12px;">
+                      <strong>${result.title}</strong><br/>
+                      ${result.address}
+                    </div>`,
+                  });
+                  infowindow.open(mapInstance, marker);
+
+                  setCurrentMarker(marker);
+                }}
+                style={{
+                  padding: "12px",
+                  borderBottom: "1px solid #eee",
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ fontWeight: "bold", marginBottom: "4px" }}>
+                  {result.title}
+                </div>
+                <div style={{ fontSize: "12px", color: "#666" }}>
+                  {result.address}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-// 버튼 스타일 공통
-const categoryBtnStyle = {
-  display: "inline-block",
-  padding: "8px 12px",
-  margin: "4px",
-  backgroundColor: "#e6f0ff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontSize: "14px",
 };
 
 export default Map;

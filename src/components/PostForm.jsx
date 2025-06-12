@@ -2,12 +2,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../PostForm.css";
-
-
+import PlaceSearchInput from "./PlaceSearchInput";
 
 //  POST /api/posts               : 새 게시글(리뷰) 작성
 //    Body → { title, content, placeList: [장소1, 장소2, …] }
-
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -15,13 +13,46 @@ const PostForm = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [places, setPlaces] = useState([""]);
+  const [places, setPlaces] = useState([]);
   const [error, setError] = useState("");
+  const [images, setImages] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
+
+  // 이미지 파일 선택 핸들러
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+
+    // 파일 형식 검사
+    const validFiles = files.filter(
+      (file) => file.type === "image/jpeg" || file.type === "image/png"
+    );
+
+    if (validFiles.length !== files.length) {
+      alert("JPG 또는 PNG 파일만 업로드 가능합니다.");
+      return;
+    }
+
+    // 미리보기 URL 생성
+    const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
+    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+    setImages((prev) => [...prev, ...validFiles]);
+  };
+
+  // 이미지 삭제 핸들러
+  const handleRemoveImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => {
+      const newUrls = [...prev];
+      URL.revokeObjectURL(newUrls[index]);
+      return newUrls.filter((_, i) => i !== index);
+    });
+  };
 
   // 장소 항목 추가
   const addPlace = () => {
     if (places.length < 5) {
-      setPlaces([...places, ""]);
+      setPlaces([...places, { title: "", address: "" }]);
     }
   };
 
@@ -31,32 +62,82 @@ const PostForm = () => {
     setPlaces(newPlaces);
   };
 
-  // 특정 인덱스 장소값 변경
-  const handlePlaceChange = (index, value) => {
+  // 장소 선택 핸들러
+  const handlePlaceSelect = (place, index) => {
     const newPlaces = [...places];
-    newPlaces[index] = value;
+    newPlaces[index] = place;
     setPlaces(newPlaces);
   };
 
   // 게시물 저장 요청
   const savePost = async (e) => {
     e.preventDefault();
+
+    // 제목 검증
+    if (!title.trim()) {
+      alert("제목을 입력해주세요.");
+      return;
+    }
+
+    // 내용 검증
+    if (!body.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${API_URL}/api/posts`,
-        {
-          title: title,
-          content: body,
-          placeList: places.filter((p) => p.trim() !== ""),
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+
+      // 이미지 파일 업로드
+      const uploadedUrls = [];
+      for (const image of images) {
+        const imageFormData = new FormData();
+        imageFormData.append("file", image);
+
+        const uploadResponse = await axios.post(
+          `${API_URL}/file/upload`,
+          imageFormData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // URL이 직접 문자열로 오는 경우 처리
+        const imageUrl =
+          typeof uploadResponse.data === "string"
+            ? uploadResponse.data
+            : uploadResponse.data.url;
+
+        if (imageUrl) {
+          uploadedUrls.push(imageUrl);
         }
-      );
+      }
+
+      // 게시글 작성 요청
+      const postData = {
+        title,
+        content: body,
+        places: places.map((place) => ({
+          title: place.title,
+          address: place.address,
+          roadAddress: place.roadAddress,
+          mapx: place.mapx,
+          mapy: place.mapy,
+          category: place.category || "",
+          link: place.link || "",
+        })),
+        images: uploadedUrls,
+      };
+
+      const response = await axios.post(`${API_URL}/api/posts`, postData, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.status === 200) {
         alert("게시물이 등록되었습니다.");
@@ -110,12 +191,11 @@ const PostForm = () => {
       </div>
       {places.map((place, index) => (
         <div key={index} className="post-row post-place-row">
-          <input
-            type="text"
-            className="post-input-full"
-            placeholder={`장소 ${index + 1}`}
-            value={place}
-            onChange={(e) => handlePlaceChange(index, e.target.value)}
+          <PlaceSearchInput
+            onPlaceSelect={(selectedPlace) =>
+              handlePlaceSelect(selectedPlace, index)
+            }
+            initialValue={place.title}
           />
           {places.length > 1 && (
             <button
@@ -128,6 +208,38 @@ const PostForm = () => {
           )}
         </div>
       ))}
+
+      {/* ─── 이미지 업로드 ─── */}
+      <div className="post-row">
+        <label className="post-label-block">이미지</label>
+        <div className="image-upload-container">
+          <input
+            type="file"
+            accept="image/jpeg,image/png"
+            multiple
+            onChange={handleImageChange}
+            className="image-upload-input"
+            id="image-upload"
+          />
+          <label htmlFor="image-upload" className="image-upload-label">
+            + 이미지 추가
+          </label>
+          <div className="image-preview-container">
+            {previewUrls.map((url, index) => (
+              <div key={index} className="image-preview-item">
+                <img src={url} alt={`미리보기 ${index + 1}`} />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage(index)}
+                  className="image-remove-btn"
+                >
+                  X
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* ─── 내용 입력 ─── */}
       <div className="post-row">

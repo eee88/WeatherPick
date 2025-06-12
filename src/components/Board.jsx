@@ -3,64 +3,59 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../Board.css";
 
-
-//  GET /api/posts/mine          : 내가 쓴 게시글 목록 불러오기
-//  GET /api/posts/{id}           : 특정 게시글(리뷰) 상세 불러오기
-//  DELETE /api/posts/{id}        : 특정 게시글 삭제
-//  (수정은 PostEditForm.jsx에서 PUT /api/posts/{id} 호출)
-
-
-const API_URL = process.env.REACT_APP_API_URL;
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination, Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
 
 const Board = () => {
   const navigate = useNavigate();
-  const [boardList, setBoardList] = useState([]);     // 리뷰 목록 배열
-  const [searchTerm, setSearchTerm] = useState("");   // 검색어 상태
-  const [currentPage, setCurrentPage] = useState(1);  // 현재 페이지 번호
-  const [postsPerPage, setPostsPerPage] = useState(10);// 페이지당 출력 개수
+  const [boardList, setBoardList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 5;
 
   useEffect(() => {
-    getBoardList();  // 컴포넌트 마운트 혹은 currentPage/postsPerPage 변경 시 갱신
-  }, [currentPage, postsPerPage]);
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await axios.get("/api/posts/list", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  const getBoardList = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/api/posts/list`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (response.data.code === "SU") {
-        setBoardList(response.data.reviewListItems);
-      } else {
-        console.error("리뷰 목록을 불러오는데 실패했습니다.");
-        setBoardList([]);
+        const dataWithImage = response.data.map((post, idx) => ({
+          ...post,
+          imageUrl: `https://picsum.photos/seed/${idx}/300/180`,
+        }));
+
+        setBoardList(dataWithImage);
+      } catch (error) {
+        console.error("게시글 불러오기 실패:", error);
       }
-    } catch (error) {
-      console.error("불러오지 못함", error);
-      setBoardList([]);  // 에러 시 빈 배열 처리
-    }
-  };
+    };
+    fetchData();
+  }, []);
 
-  // 검색 필터링: 제목, 작성자 포함 여부
-  const filteredList = boardList.filter((board) =>
-    board.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    board.writerNickname.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredList = boardList.filter(
+    (board) =>
+      board.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      board.writerNickname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 페이징 계산
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = filteredList.slice(indexOfFirstPost, indexOfLastPost);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const Post = () => navigate("/postform"); // 글쓰기 버튼 클릭 시
+  const goToWrite = () => navigate("/postform");
 
   return (
-    <div className="board-container">
-      {/* 제목 */}
-      <h1 className="board-title">리뷰 페이지</h1>
-
+    <div
+      className="board-container"
+      style={{ overflowX: "hidden", position: "relative" }}
+    >
       {/* 검색창 */}
       <div className="search-bar">
         <input
@@ -68,23 +63,111 @@ const Board = () => {
           placeholder="제목/작성자 검색"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            padding: "10px 20px",
+            fontSize: "16px",
+            borderRadius: "30px",
+            border: "1px solid #ccc",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+            width: "400px",
+            height: "50px",
+          }}
         />
       </div>
 
+      {/* 인기 게시글 슬라이드 */}
+      <Swiper
+        slidesPerView={1}
+        spaceBetween={20}
+        pagination={{ clickable: true }}
+        autoplay={{ delay: 3000 }}
+        loop={true}
+        modules={[Pagination, Autoplay]}
+        style={{ width: "100%", maxWidth: "800px", margin: "80px auto 40px" }}
+      >
+        {boardList.slice(0, 5).map((board) => (
+          <SwiperSlide key={board.reviewId}>
+            <div
+              className="slide-card"
+              onClick={() => navigate(`/board/${board.reviewId}`)}
+              style={{ position: "relative", cursor: "pointer" }}
+            >
+              <img
+                src={board.imageUrl}
+                alt="썸네일"
+                style={{
+                  width: "100%",
+                  height: "240px",
+                  objectFit: "cover",
+                  borderRadius: "10px",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "15px",
+                  left: "20px",
+                  color: "white",
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  padding: "10px 15px",
+                  borderRadius: "8px",
+                }}
+              >
+                <h3 style={{ margin: 0 }}>{board.title}</h3>
+                <p className="writer" style={{ margin: 0, fontSize: "14px" }}>
+                  작성자: {board.writerNickname}
+                </p>
+              </div>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+
       {/* 글쓰기 버튼 */}
       <div className="board-button">
-        <button onClick={Post}>글쓰기</button>
+        <button
+          onClick={goToWrite}
+          style={{
+            position: "fixed",
+            bottom: "50px",
+            right: "50px",
+            padding: "12px 24px",
+            backgroundColor: "#E87678",
+            color: "#fff",
+            border: "none",
+            borderRadius: "50px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            cursor: "pointer",
+            zIndex: 1000,
+          }}
+        >
+          글쓰기
+        </button>
       </div>
 
-      {/* 리뷰 목록 (페이지네이션 적용) */}
+      {/* 리뷰 목록 */}
       <ul className="board-posts">
         {currentPosts.map((board) => (
           <li key={board.reviewId} className="board-post-item">
-            <Link to={`/board/${board.reviewId}`}>
-              <div className="post-title">{board.title}</div>
-              <div className="post-info">
-                <span>작성자: {board.writerNickname}</span>
-                <span>작성일: {board.writeDateTime}</span>
+            <Link to={`/board/${board.reviewId}`} className="post-link">
+              <div className="post-image">
+                <img
+                  src={board.imageUrl}
+                  alt="썸네일"
+                  style={{
+                    width: "100px",
+                    height: "60px",
+                    objectFit: "cover",
+                    borderRadius: "4px",
+                  }}
+                />
+              </div>
+              <div className="post-details">
+                <div className="post-title">{board.title}</div>
+                <div className="post-info">
+                  <span>작성자: {board.writerNickname}</span>
+                  <span>작성일: {board.writeDateTime}</span>
+                </div>
                 <div className="post-stats">
                   <span>❤️ {board.favoriteCount}</span>
                   <span>👁️ {board.viewCount}</span>
@@ -97,7 +180,7 @@ const Board = () => {
         ))}
       </ul>
 
-      {/* 페이징 버튼 */}
+      {/* 페이지네이션 */}
       <div className="board-pagination">
         {[...Array(Math.ceil(filteredList.length / postsPerPage)).keys()].map(
           (number) => (
