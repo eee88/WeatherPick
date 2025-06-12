@@ -1,0 +1,209 @@
+.post-container {
+  width: 90%;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.post-header {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.post-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.post-label-inline {
+  width: 100px;
+  font-size: 1rem;
+  font-weight: 500;
+  padding-top: 0.5rem;
+}
+
+.post-input-inline {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.post-add-place-btn {
+  margin-left: auto;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  background-color: #cb686a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.post-add-place-btn:hover {
+  background-color: #cb686a;
+}
+
+.post-place-row {
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.post-input-full {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.post-remove-place-btn {
+  margin-left: 0.5rem;
+  width: 30px;
+  height: 30px;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.9rem;
+  position: absolute;
+  right: -40px;
+  top: 0;
+}
+
+.post-remove-place-btn:hover {
+  background-color: #cc0000;
+}
+
+.post-label-block {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.post-textarea {
+  width: 100%;
+  height: 200px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 0.75rem;
+}
+
+.post-error-message {
+  color: #d32f2f;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.post-button-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.post-btn {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.post-btn-primary {
+  background-color: #e87678;
+  color: white;
+}
+
+.post-btn-primary:hover {
+  background-color: #e08385;
+}
+
+.post-btn-secondary {
+  background-color: #757575;
+  color: white;
+}
+
+.post-btn-secondary:hover {
+  background-color: #616161;
+}
+
+/* ─── 이미지 업로드 ─── */
+.image-upload-container {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.image-upload-input {
+  display: none;
+}
+
+.image-upload-label {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #cb686a;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.image-upload-label:hover {
+  background-color: #cb686a;
+}
+
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(255, 68, 68, 0.8);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+}
+
+.image-remove-btn:hover {
+  background-color: rgba(255, 68, 68, 1);
+}
