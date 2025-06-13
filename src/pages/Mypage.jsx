@@ -3,6 +3,7 @@ import axios from "axios";
 import Modal from "react-modal";
 import "../Mypage.css";
 import defaultProfile from "../assets/datepick_mypage.png";
+import ScrapListModal from "../components/ScrapListModal";
 
 Modal.setAppElement("#root");
 
@@ -25,6 +26,8 @@ const Mypage = () => {
   const [isCommentModalOpen, setCommentModalOpen] = useState(false);
   const [isLikedModalOpen, setLikedModalOpen] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [nicknameValidation, setNicknameValidation] = useState({ isValid: true, message: "" });
+  const [originalNickname, setOriginalNickname] = useState("");
 
   const fetchUserInfo = async () => {
     try {
@@ -52,9 +55,32 @@ const Mypage = () => {
           confirmPassword: "",
           profileImage: res.data.profileImage,
         });
+        setOriginalNickname(res.data.nickname || "");
       }
     } catch (err) {
       console.error("유저 정보 불러오기 실패", err);
+    }
+  };
+
+  const checkNickname = async () => {
+    if (userInfo.name === originalNickname) {
+      setNicknameValidation({ isValid: true, message: "현재 사용 중인 닉네임입니다." });
+      return true;
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/api/user/check-nickname?nickname=${userInfo.name}`);
+      if (response.data.exists) {
+        setNicknameValidation({ isValid: false, message: "이미 사용 중인 닉네임입니다." });
+        return false;
+      } else {
+        setNicknameValidation({ isValid: true, message: "사용 가능한 닉네임입니다." });
+        return true;
+      }
+    } catch (error) {
+      console.error("닉네임 중복 확인 중 오류 발생:", error);
+      setNicknameValidation({ isValid: false, message: "중복 확인 중 오류가 발생했습니다." });
+      return false;
     }
   };
 
@@ -64,14 +90,16 @@ const Mypage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === "name") {
+      setNicknameValidation({ isValid: true, message: "" });
+    }
+    
     setUserInfo((prev) => ({ ...prev, [name]: value }));
 
     if (name === "password" || name === "confirmPassword") {
       if (name === "password") {
-        if (
-          value !== userInfo.confirmPassword &&
-          userInfo.confirmPassword !== ""
-        ) {
+        if (value !== userInfo.confirmPassword && userInfo.confirmPassword !== "") {
           setPasswordError("비밀번호가 일치하지 않습니다.");
         } else {
           setPasswordError("");
@@ -101,6 +129,11 @@ const Mypage = () => {
         return;
       }
 
+      if (userInfo.name !== originalNickname && !nicknameValidation.isValid) {
+        alert("닉네임 중복 확인이 필요합니다.");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("username", userInfo.username);
       formData.append("nickname", userInfo.name);
@@ -109,7 +142,6 @@ const Mypage = () => {
       if (userInfo.password.trim() !== "") {
         formData.append("password", userInfo.password);
       }
-      // 프로필 이미지가 File 객체인 경우에만 추가
       if (userInfo.profileImage instanceof File) {
         formData.append("profileImage", userInfo.profileImage);
       }
@@ -136,6 +168,7 @@ const Mypage = () => {
           password: "",
           confirmPassword: "",
         }));
+        setOriginalNickname(response.data.nickname);
         alert("정보가 성공적으로 수정되었습니다.");
       }
     } catch (error) {
@@ -173,13 +206,27 @@ const Mypage = () => {
             <div className="left-inputs">
               <div className="mb-4">
                 <label htmlFor="name">닉네임</label>
-                <input
-                  id="name"
-                  name="name"
-                  value={userInfo.name}
-                  onChange={handleInputChange}
-                  placeholder="닉네임"
-                />
+                <div className="input-group">
+                  <input
+                    id="name"
+                    name="name"
+                    value={userInfo.name}
+                    onChange={handleInputChange}
+                    placeholder="닉네임"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={checkNickname}
+                    className="check-button"
+                  >
+                    중복확인
+                  </button>
+                </div>
+                {nicknameValidation.message && (
+                  <p className={`validation-message ${nicknameValidation.isValid ? "success" : "error"}`}>
+                    {nicknameValidation.message}
+                  </p>
+                )}
               </div>
               <div className="mb-4">
                 <label htmlFor="email">이메일</label>
@@ -189,6 +236,8 @@ const Mypage = () => {
                   value={userInfo.email}
                   onChange={handleInputChange}
                   placeholder="이메일"
+                  disabled
+                  readOnly
                 />
               </div>
               <div className="mb-4">
@@ -236,8 +285,6 @@ const Mypage = () => {
               </div>
             </div>
             <div className="right-links">
-              <p onClick={() => setReviewModalOpen(true)}>내가 쓴 리뷰</p>
-              <p onClick={() => setCommentModalOpen(true)}>작성한 댓글</p>
               <p onClick={() => setLikedModalOpen(true)}>스크랩한 글 목록</p>
             </div>
           </div>
@@ -268,15 +315,11 @@ const Mypage = () => {
         <button onClick={() => setCommentModalOpen(false)}>닫기</button>
       </Modal>
 
-      <Modal
+      <ScrapListModal 
         isOpen={isLikedModalOpen}
-        onRequestClose={() => setLikedModalOpen(false)}
-        className="modal"
-        overlayClassName="modal-overlay"
-      >
-        <h2>추천한 글</h2>
-        <button onClick={() => setLikedModalOpen(false)}>닫기</button>
-      </Modal>
+        onClose={() => setLikedModalOpen(false)}
+        username={userInfo.username}
+      />
     </div>
   );
 };
