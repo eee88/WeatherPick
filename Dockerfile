@@ -13,8 +13,11 @@ RUN npm install
 # 소스 코드 전체 복사
 COPY . .
 
+COPY certificate.crt .
+COPY private.key .
+
 # 앱 포트 노출
-EXPOSE 443
+EXPOSE 3000
 
 # 앱 실행
 CMD ["npm", "start"]

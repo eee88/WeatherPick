@@ -62,7 +62,4 @@ jobs:
             docker pull namturne/weatherpick-front:latest
 
             echo "[3] Run new container"
-            docker run -d --name weatherpick-container \
-              -p 3000:3000 \ 
-              -p 443:443 \
-              namturne/weatherpick-front:latest
+            docker run -d -p 443:3000 --name weatherpick-front weatherpick-front:latest
