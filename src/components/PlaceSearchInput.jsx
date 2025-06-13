@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState} from "react";
 import axios from "axios";
 import styled from "styled-components";
 import "./PlaceSearchInput.css";
@@ -41,24 +41,20 @@ const WrapSearchResult = styled.div`
   z-index: 1000;
 `;
 
-const SearchResultTitle = styled.div`
-  font-weight: 500;
-  margin-bottom: 4px;
-`;
-
-const SearchResultAddress = styled.div`
-  font-size: 12px;
-  color: #666;
-`;
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const PlaceSearchInput = ({ onPlaceSelect, initialValue }) => {
   const [searchTerm, setSearchTerm] = useState(initialValue || "");
   const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
 
-  // 장소 검색
-  const handleSearch = useCallback(async () => {
+  const searchPlaces = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -76,42 +72,31 @@ const PlaceSearchInput = ({ onPlaceSelect, initialValue }) => {
         setSearchResults(response.data.places);
       }
     } catch (error) {
-      console.error("Error searching for place:", error);
-      if (error.response?.status === 401) {
-        
-      } else if (error.response?.status === 404) {
-        alert("검색 결과가 없습니다.");
-      } else {
-        alert("장소 검색에 실패했습니다.");
-      }
+      console.error("Error searching places:", error);
       setSearchResults([]);
     }
-  }, [query]);
+  };
 
-  // 컴포넌트 마운트 시 자동으로 검색
-  useEffect(() => {
-    handleSearch();
-  }, [handleSearch]);
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    searchPlaces(value);
+    setShowResults(true);
+  };
 
-  // 검색 결과 리스트 중 하나 선택
-  const handlePlaceSelection = (result) => {
-    const place = {
-      title: result.title.replace(/<[^>]*>/g, ""),
-      address: result.address,
-      roadAddress: result.roadAddress,
-      mapx: result.mapx,
-      mapy: result.mapy,
-      category: result.category || "",
-      link: result.link || "",
-      description: result.description || ""
-    };
-    
-    setQuery(place.title);
-    setSearchResults([]);
-    
-    if (onPlaceSelect) {
-      onPlaceSelect(place);
-    }
+  const handlePlaceSelect = (place) => {
+    setSearchTerm(place.title);
+    setShowResults(false);
+    // 모든 필수 정보를 포함하여 전달
+    onPlaceSelect({
+      title: place.title,
+      address: place.address,
+      roadAddress: place.roadAddress,
+      mapx: place.mapx,
+      mapy: place.mapy,
+      category: place.category || "",
+      link: place.link || ""
+    });
   };
 
   return (
@@ -134,7 +119,7 @@ const PlaceSearchInput = ({ onPlaceSelect, initialValue }) => {
                 <div
                   key={index}
                   className="search-result-item"
-                  onClick={() => handlePlaceSelection(place)}
+                  onClick={() => handlePlaceSelect(place)}
                 >
                   <div className="place-title">{place.title}</div>
                   <div className="place-address">{place.address}</div>
