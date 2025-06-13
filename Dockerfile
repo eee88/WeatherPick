@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # 앱 포트 노출
-EXPOSE 3000
+EXPOSE 443
 
 # 앱 실행
 CMD ["npm", "start"]
