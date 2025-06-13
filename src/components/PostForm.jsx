@@ -65,7 +65,16 @@ const PostForm = () => {
   // 장소 선택 핸들러
   const handlePlaceSelect = (place, index) => {
     const newPlaces = [...places];
-    newPlaces[index] = place;
+    newPlaces[index] = {
+      title: place.title,
+      address: place.address,
+      roadAddress: place.roadAddress,
+      mapx: place.mapx,
+      mapy: place.mapy,
+      category: place.category || "",
+      link: place.link || "",
+      description: place.description || ""
+    };
     setPlaces(newPlaces);
   };
 
@@ -128,9 +137,12 @@ const PostForm = () => {
           mapy: place.mapy,
           category: place.category || "",
           link: place.link || "",
+          description: place.description || ""
         })),
         images: uploadedUrls,
       };
+
+      console.log("전송할 데이터:", postData); // 디버깅용 로그
 
       const response = await axios.post(`${API_URL}/api/posts`, postData, {
         headers: {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../Board.css";
+import "../BoardDetail.css";
 import {
   MapContainer,
   TileLayer,
@@ -26,10 +26,12 @@ const BoardDetail = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
+  const [isLiked, setIsLiked] = useState(false);
+  const [isScrapped, setIsScrapped] = useState(false);
   const isFirstRender = useRef(true);
 
   // 게시글 불러오기
@@ -42,12 +44,14 @@ const BoardDetail = () => {
 
       if (response.data.code === "SU") {
         setPost(response.data);
+        setIsLiked(response.data.isFavorite);
+        setIsScrapped(response.data.isScrap);
       } else {
         setError("게시글을 불러오는데 실패했습니다.");
       }
-    } catch (err) {
-      console.error("BoardDetail: 불러오지 못했습니다.", err);
-      setError("게시글을 불러오는 중 오류가 발생했습니다.");
+    } catch (error) {
+      setError("게시글을 불러오는데 실패했습니다.");
+      console.error("게시글 불러오기 실패:", error);
     } finally {
       setLoading(false);
     }
@@ -79,18 +83,20 @@ const BoardDetail = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
-        `${API_URL}/api/posts/${id}/comment`,
+      const response = await axios.post(
+        `${API_URL}/api/posts/${id}/comments`,
         { content: newComment },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setNewComment("");
-      getComments(); // 댓글 목록 새로고침
-    } catch (err) {
-      console.error("댓글 작성 실패:", err);
-      alert("댓글 작성에 실패했습니다.");
+
+      if (response.data.code === "SU") {
+        setComments([...comments, response.data]);
+        setNewComment("");
+      }
+    } catch (error) {
+      console.error("댓글 작성 실패:", error);
     }
   };
 
@@ -104,7 +110,7 @@ const BoardDetail = () => {
   }, [id]);
 
   // 좋아요 토글
-  const toggleFavorite = async () => {
+  const handleLike = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
@@ -116,19 +122,21 @@ const BoardDetail = () => {
       );
 
       if (response.data.code === "SU") {
+        setIsLiked(!isLiked);
         setPost((prev) => ({
           ...prev,
-          favoriteCount: response.data.favoriteCount,
+          favoriteCount: isLiked
+            ? prev.favoriteCount - 1
+            : prev.favoriteCount + 1,
         }));
       }
-    } catch (err) {
-      console.error("좋아요 처리 실패:", err);
-      alert("좋아요 처리에 실패했습니다.");
+    } catch (error) {
+      console.error("좋아요 처리 실패:", error);
     }
   };
 
   // 스크랩 토글
-  const toggleScrap = async () => {
+  const handleScrap = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
@@ -140,14 +148,14 @@ const BoardDetail = () => {
       );
 
       if (response.data.code === "SU") {
+        setIsScrapped(!isScrapped);
         setPost((prev) => ({
           ...prev,
-          scrapCount: response.data.scrapCount,
+          scrapCount: isScrapped ? prev.scrapCount - 1 : prev.scrapCount + 1,
         }));
       }
-    } catch (err) {
-      console.error("스크랩 처리 실패:", err);
-      alert("스크랩 처리에 실패했습니다.");
+    } catch (error) {
+      console.error("스크랩 처리 실패:", error);
     }
   };
 
@@ -185,8 +193,9 @@ const BoardDetail = () => {
   // 로딩 중
   if (loading) {
     return (
-      <div className="board-container">
-        <p>로딩 중...</p>
+      <div className="detail-loading">
+        <div className="detail-spinner"></div>
+        <p>게시글을 불러오는 중...</p>
       </div>
     );
   }
@@ -194,9 +203,9 @@ const BoardDetail = () => {
   // 에러가 있을 때
   if (error) {
     return (
-      <div className="board-container">
-        <p style={{ color: "red" }}>{error}</p>
-        <button onClick={moveToBoard}>목록으로 돌아가기</button>
+      <div className="detail-error">
+        <p>{error}</p>
+        <button onClick={() => navigate("/board")}>목록으로 돌아가기</button>
       </div>
     );
   }
@@ -204,148 +213,126 @@ const BoardDetail = () => {
   // 게시글이 아예 없을 경우 (404 등)
   if (!post) {
     return (
-      <div className="board-container">
-        <p>존재하지 않는 게시글입니다.</p>
-        <button onClick={moveToBoard}>목록으로 돌아가기</button>
+      <div className="detail-error">
+        <p>게시글을 찾을 수 없습니다.</p>
+        <button onClick={() => navigate("/board")}>목록으로 돌아가기</button>
       </div>
     );
   }
 
   return (
-    <div className="board-container">
-      {/* 게시글 상세 카드 */}
-      <div className="board-detail">
-        <div className="board-detail-header">
-          <h2>{post.title}</h2>
-          <div className="board-detail-meta">
-            <div className="writer-info">
+    <div className="detail-container">
+      <div className="detail-header">
+        <div className="detail-title">
+          <h1>{post.title}</h1>
+          <div className="detail-meta">
+            <div className="detail-author">
               <img
-                src={
-                  post.writerProfileImage || "https://via.placeholder.com/30"
-                }
+                src={post.writerProfileImage || "/datepick_logo.png"}
                 alt="프로필"
-                className="writer-profile-image"
+                className="detail-profile"
               />
-              <span>작성자: {post.writerNickname}</span>
+              <span className="detail-name">{post.writerNickname}</span>
             </div>
-            <span>작성일: {post.writeDate}</span>
-          </div>
-        </div>
-
-        {/* 장소 목록 */}
-        {post.places && post.places.length > 0 && (
-          <div className="board-detail-places">
-            <h3>방문 장소</h3>
-            <ul>
-              {post.places.map((place, index) => (
-                <li key={index} className="place-item">
-                  <div className="place-title">
-                    <span className="place-number">{index + 1}</span> 📍{" "}
-                    {place.title}
-                  </div>
-                  <div className="place-address">{place.address}</div>
-                  {place.roadAddress && (
-                    <div className="place-road-address">
-                      (도로명: {place.roadAddress})
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={handleViewOnMap}
-              style={{
-                backgroundColor: "#2d8cff",
-                color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "4px",
-                cursor: "pointer",
-                marginTop: "10px",
-                fontSize: "14px",
-              }}
-            >
-              지도에서 보기
-            </button>
-          </div>
-        )}
-
-        {/* 이미지 섹션을 여기로 이동 */}
-        {post.images && post.images.length > 0 && (
-          <div className="board-detail-images">
-            <h3>첨부된 이미지</h3>
-            <div className="image-grid">
-              {post.images.map((image, index) => (
-                <div key={index} className="image-item">
-                  <img src={image} alt={`첨부된 이미지 ${index + 1}`} />
-                </div>
-              ))}
+            <div className="detail-stats">
+              <span>👁️ {post.viewCount}</span>
+              <span>❤️ {post.likeCount}</span>
+              <span>📌 {post.scrapCount}</span>
+              <span>💬 {post.commentCount}</span>
             </div>
           </div>
-        )}
-
-        <div className="board-detail-content">
-          <p>{post.content}</p>
         </div>
-
-        {/* 통계 정보 */}
-        <div className="board-detail-stats">
-          <button onClick={toggleFavorite} className="stat-button">
-            ❤️ {post.favoriteCount || 0}
+        <div className="detail-actions">
+          <button
+            className={`detail-button ${isLiked ? "liked" : ""}`}
+            onClick={handleLike}
+          >
+            {isLiked ? "❤️ 좋아요" : "🤍 좋아요"}
           </button>
-          <span>👁️ {post.viewCount || 0}</span>
-          <button onClick={toggleScrap} className="stat-button">
-            📌 {post.scrapCount || 0}
+          <button
+            className={`detail-button ${isScrapped ? "scrapped" : ""}`}
+            onClick={handleScrap}
+          >
+            {isScrapped ? "📌 스크랩됨" : "📌 스크랩"}
           </button>
-          <span>💬 {post.commentCount || 0}</span>
         </div>
+      </div>
 
-        {/* 댓글 섹션 */}
-        <div className="board-detail-comments">
-          <h3>댓글</h3>
-
-          {/* 댓글 작성 폼 */}
-          <form onSubmit={handleCommentSubmit} className="comment-form">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="댓글을 작성하세요..."
-              className="comment-input"
-            />
-            <button type="submit" className="comment-submit-btn">
-              댓글 작성
-            </button>
-          </form>
-
-          {/* 댓글 목록 */}
-          <div className="comment-list">
-            {comments.map((comment, index) => (
-              <div key={index} className="comment-item">
-                <div className="comment-header">
-                  <div className="comment-author-info">
-                    <img
-                      src={comment.profileImage || "/weatherPickMy.png"}
-                      alt="프로필"
-                      className="comment-profile-image"
-                    />
-                    <span className="comment-author">{comment.nickName}</span>
-                  </div>
-                  <span className="comment-date">{comment.writeDateTime}</span>
-                </div>
-                <div className="comment-content">{comment.content}</div>
+      {post.images && post.images.length > 0 && (
+        <div className="detail-images">
+          <h3>첨부된 이미지</h3>
+          <div className="detail-image-grid">
+            {post.images.map((image, index) => (
+              <div key={index} className="detail-image-item">
+                <img src={image} alt={`첨부된 이미지 ${index + 1}`} />
               </div>
             ))}
           </div>
         </div>
+      )}
 
-        {/* 버튼 그룹 */}
-        <div className="board-detail-buttons">
-          <button onClick={moveToBoard}>목록으로</button>
-          <button onClick={moveToEdit}>수정하기</button>
-          <button onClick={deletePost} style={{ color: "red" }}>
-            삭제하기
+      <div className="detail-content">
+        <div className="detail-text">{post.content}</div>
+      </div>
+
+      {post.places && post.places.length > 0 && (
+        <div className="detail-places">
+          <h3>방문 장소</h3>
+          <div className="detail-places-list">
+            {post.places.map((place, index) => (
+              <div key={index} className="detail-place-card">
+                <h4>{place.title}</h4>
+                <p>{place.address}</p>
+                {place.roadAddress && <p>{place.roadAddress}</p>}
+                {place.category && <p className="detail-category">{place.category}</p>}
+              </div>
+            ))}
+          </div>
+          <button 
+            onClick={handleViewOnMap}
+            className="detail-map-button"
+          >
+            지도에서 보기
           </button>
         </div>
+      )}
+
+      <div className="detail-comments">
+        <h3>댓글</h3>
+        <form onSubmit={handleCommentSubmit} className="detail-comment-form">
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="댓글을 작성하세요..."
+            className="detail-comment-input"
+          />
+          <button type="submit" className="detail-comment-submit">
+            댓글 작성
+          </button>
+        </form>
+
+        <div className="detail-comments-list">
+          {comments.map((comment) => (
+            <div key={comment.commentId} className="detail-comment-item">
+              <div className="detail-comment-header">
+                <img
+                  src={comment.profileImage || "/datepick_logo.png"}
+                  alt="프로필"
+                  className="detail-comment-profile"
+                />
+                <span className="detail-comment-author">{comment.nickName}</span>
+                <span className="detail-comment-date">{comment.writeDateTime}</span>
+              </div>
+              <p className="detail-comment-content">{comment.content}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="detail-navigation">
+        <button onClick={() => navigate("/board")} className="detail-back-button">
+          목록으로
+        </button>
       </div>
     </div>
   );

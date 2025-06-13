@@ -1,6 +1,6 @@
 import Nav from "./Nav";
 import "./Sidebar.css";
-import weatherPickLogo from "./assets/datepick_logo1.png";
+import weatherPickLogo from "./assets/datepick_logoMain.png";
 
 const Sidebar = () => {
   return (

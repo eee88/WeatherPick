@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import "../App.css";
-import logo from "../assets/datepick_logo1.png";
+import logo from "../assets/datepick_logoMain.png";
 import axios from "axios";
 import { useState } from "react";
 

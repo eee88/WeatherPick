@@ -8,6 +8,8 @@ import { Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const Board = () => {
   const navigate = useNavigate();
   const [boardList, setBoardList] = useState([]);
@@ -16,32 +18,53 @@ const Board = () => {
   const postsPerPage = 5;
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        const response = await axios.get("/api/posts/list", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    getBoardList();  // 컴포넌트 마운트 혹은 currentPage/postsPerPage 변경 시 갱신
+  }, [currentPage, postsPerPage]);
 
-        const dataWithImage = response.data.map((post, idx) => ({
-          ...post,
-          imageUrl: `https://picsum.photos/seed/${idx}/300/180`,
-        }));
+  const getBoardList = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_URL}/api/posts/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (response.data.code === "SU") {
+        // 각 게시글의 이미지 URL 가져오기
+        const postsWithImages = await Promise.all(
+          response.data.reviewListItems.map(async (post) => {
+            try {
+              const imageResponse = await axios.get(`${API_URL}/file/post/${post.reviewPostId}`);
+              return {
+                ...post,
+                imageUrls: imageResponse.data.imageUrls || []
+              };
+            } catch (error) {
+              console.error(`이미지 로드 실패 (게시글 ID: ${post.reviewPostId}):`, error);
+              return {
+                ...post,
+                imageUrls: []
+              };
+            }
+          })
+        );
 
-        setBoardList(dataWithImage);
-      } catch (error) {
-        console.error("게시글 불러오기 실패:", error);
+        setBoardList(postsWithImages);
+
+        
+      } else {
+        console.error("리뷰 목록을 불러오는데 실패했습니다.");
+        setBoardList([]);
       }
-    };
-    fetchData();
-  }, []);
+    } catch (error) {
+      console.error("불러오지 못함", error);
+      setBoardList([]);  // 에러 시 빈 배열 처리
+    }
+  };
 
   const filteredList = boardList.filter(
     (board) =>
       board.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      board.writerNickname.toLowerCase().includes(searchTerm.toLowerCase())
+      (board.writerNickname && board.writerNickname.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const indexOfLastPost = currentPage * postsPerPage;
@@ -86,14 +109,14 @@ const Board = () => {
         style={{ width: "100%", maxWidth: "800px", margin: "80px auto 40px" }}
       >
         {boardList.slice(0, 5).map((board) => (
-          <SwiperSlide key={board.reviewId}>
+          <SwiperSlide key={board.reviewPostId}>
             <div
               className="slide-card"
-              onClick={() => navigate(`/board/${board.reviewId}`)}
+              onClick={() => navigate(`/board/${board.reviewPostId}`)}
               style={{ position: "relative", cursor: "pointer" }}
             >
               <img
-                src={board.imageUrl}
+                src={board.imageUrls && board.imageUrls.length > 0 ? board.imageUrls[0] : "/datepick_logo.png"}
                 alt="썸네일"
                 style={{
                   width: "100%",
@@ -148,11 +171,11 @@ const Board = () => {
       {/* 리뷰 목록 */}
       <ul className="board-posts">
         {currentPosts.map((board) => (
-          <li key={board.reviewId} className="board-post-item">
-            <Link to={`/board/${board.reviewId}`} className="post-link">
+          <li key={board.reviewPostId} className="board-post-item">
+            <Link to={`/board/${board.reviewPostId}`} className="post-link">
               <div className="post-image">
                 <img
-                  src={board.imageUrl}
+                  src={board.imageUrls && board.imageUrls.length > 0 ? board.imageUrls[0] : "/datepick_logo.png"}
                   alt="썸네일"
                   style={{
                     width: "100px",
@@ -165,7 +188,19 @@ const Board = () => {
               <div className="post-details">
                 <div className="post-title">{board.title}</div>
                 <div className="post-info">
-                  <span>작성자: {board.writerNickname}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <img
+                      src={board.writerProfileImage || "/datepick_logo.png"}
+                      alt="프로필"
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        borderRadius: "50%",
+                        objectFit: "cover"
+                      }}
+                    />
+                    <span>작성자: {board.writerNickname}</span>
+                  </div>
                   <span>작성일: {board.writeDateTime}</span>
                 </div>
                 <div className="post-stats">

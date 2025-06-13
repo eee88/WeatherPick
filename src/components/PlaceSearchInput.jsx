@@ -109,13 +109,24 @@ const PlaceSearchInput = ({ onPlaceSelect }) => {
   };
 
   // 검색 결과 리스트 중 하나 선택
-  const handlePlaceSelection = (title, address) => {
-    setSelectedPlace({ title, address });
-    setQuery(title);
+  const handlePlaceSelection = (result) => {
+    const selectedPlace = {
+      title: result.title.replace(/<[^>]*>/g, ""),
+      address: result.address,
+      roadAddress: result.roadAddress,
+      mapx: result.mapx,
+      mapy: result.mapy,
+      category: result.category || "",
+      link: result.link || "",
+      description: result.description || ""
+    };
+    
+    setSelectedPlace(selectedPlace);
+    setQuery(selectedPlace.title);
     setSearchResults([]);
     
     if (onPlaceSelect) {
-      onPlaceSelect({ title, address });
+      onPlaceSelect(selectedPlace);
     }
   };
 
@@ -137,12 +148,7 @@ const PlaceSearchInput = ({ onPlaceSelect }) => {
             <>
               {searchResults.map((result, index) => (
                 <div
-                  onClick={() =>
-                    handlePlaceSelection(
-                      result.title.replace(/<[^>]*>/g, ""),
-                      result.address
-                    )
-                  }
+                  onClick={() => handlePlaceSelection(result)}
                   key={index}
                   className="search-result-item"
                 >

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 import "../App.css";
-import logo from "../assets/datepick_logo1.png";
+import logo from "../assets/datepick_logoMain.png";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
