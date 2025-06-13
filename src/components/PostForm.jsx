@@ -94,13 +94,11 @@ const PostForm = () => {
 
     try {
       const token = localStorage.getItem("token");
-
       // 이미지 파일 업로드
       const uploadedUrls = [];
       for (const image of images) {
         const imageFormData = new FormData();
         imageFormData.append("file", image);
-
         const uploadResponse = await axios.post(
           `${API_URL}/file/upload`,
           imageFormData,

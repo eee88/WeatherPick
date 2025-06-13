@@ -126,7 +126,9 @@
 }
 
 .post-btn-primary:hover {
+
   background-color: #e08385;
+
 }
 
 .post-btn-secondary {
@@ -151,6 +153,7 @@
 .image-upload-label {
   display: inline-block;
   padding: 8px 16px;
+
   background-color: #cb686a;
   color: white;
   border-radius: 4px;
@@ -160,7 +163,9 @@
 }
 
 .image-upload-label:hover {
+
   background-color: #cb686a;
+
 }
 
 .image-preview-container {

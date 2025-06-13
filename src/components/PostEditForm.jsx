@@ -115,7 +115,6 @@ const PostEditForm = () => {
           },
         }
       );
-
       if (response.data.code === "SU") {
         alert("수정되었습니다.");
         navigate(`/board/${id}`);

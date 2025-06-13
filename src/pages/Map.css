@@ -50,7 +50,11 @@
 }
 
 .category-item:hover {
+<<<<<<< HEAD
   color: #ff44be;
+=======
+  color: #2d8cff;
+>>>>>>> uijin
 }
 
 .category-icon {
@@ -60,4 +64,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+<<<<<<< HEAD
 }
+=======
+} 
+>>>>>>> uijin

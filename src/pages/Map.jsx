@@ -102,18 +102,15 @@ const Map = () => {
 
       if (response.data && response.data.places) {
         setSearchResults(response.data.places);
-
         // 첫 번째 검색 결과로 지도 이동
         const firstResult = response.data.places[0];
         const [lat, lng] = convertToLatLng(firstResult.mapx, firstResult.mapy);
         const position = new window.naver.maps.LatLng(lat, lng);
         mapInstance.setCenter(position);
-
         // 기존 마커 제거
         if (currentMarker) {
           currentMarker.setMap(null);
         }
-
         // 새로운 마커 생성
         const marker = new window.naver.maps.Marker({
           position: position,
@@ -262,12 +259,10 @@ const Map = () => {
                   const [lat, lng] = convertToLatLng(result.mapx, result.mapy);
                   const position = new window.naver.maps.LatLng(lat, lng);
                   mapInstance.setCenter(position);
-
                   // 기존 마커 제거
                   if (currentMarker) {
                     currentMarker.setMap(null);
                   }
-
                   // 새로운 마커 생성
                   const marker = new window.naver.maps.Marker({
                     position: position,

@@ -109,6 +109,7 @@ const Mypage = () => {
       if (userInfo.password.trim() !== "") {
         formData.append("password", userInfo.password);
       }
+      // 프로필 이미지가 File 객체인 경우에만 추가
       if (userInfo.profileImage instanceof File) {
         formData.append("profileImage", userInfo.profileImage);
       }
