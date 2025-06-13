@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import styled from "styled-components";
 import "./PlaceSearchInput.css";
@@ -56,18 +56,9 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 const PlaceSearchInput = ({ onPlaceSelect }) => {
   const [query, setQuery] = useState("조선대학교");
   const [searchResults, setSearchResults] = useState([]);
-  const [selectedPlace, setSelectedPlace] = useState({
-    title: "",
-    address: "",
-  });
-
-  // 컴포넌트 마운트 시 자동으로 검색
-  useEffect(() => {
-    handleSearch();
-  }, []);
 
   // 장소 검색
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -96,9 +87,7 @@ const PlaceSearchInput = ({ onPlaceSelect }) => {
     } catch (error) {
       console.error("Error searching for place:", error);
       if (error.response?.status === 401) {
-        alert("로그인이 필요합니다.");
-        // 로그인 페이지로 리다이렉트
-        window.location.href = "/";
+        
       } else if (error.response?.status === 404) {
         alert("검색 결과가 없습니다.");
       } else {
@@ -106,11 +95,16 @@ const PlaceSearchInput = ({ onPlaceSelect }) => {
       }
       setSearchResults([]);
     }
-  };
+  }, [query]);
+
+  // 컴포넌트 마운트 시 자동으로 검색
+  useEffect(() => {
+    handleSearch();
+  }, [handleSearch]);
 
   // 검색 결과 리스트 중 하나 선택
   const handlePlaceSelection = (result) => {
-    const selectedPlace = {
+    const place = {
       title: result.title.replace(/<[^>]*>/g, ""),
       address: result.address,
       roadAddress: result.roadAddress,
@@ -121,12 +115,11 @@ const PlaceSearchInput = ({ onPlaceSelect }) => {
       description: result.description || ""
     };
     
-    setSelectedPlace(selectedPlace);
-    setQuery(selectedPlace.title);
+    setQuery(place.title);
     setSearchResults([]);
     
     if (onPlaceSelect) {
-      onPlaceSelect(selectedPlace);
+      onPlaceSelect(place);
     }
   };
 

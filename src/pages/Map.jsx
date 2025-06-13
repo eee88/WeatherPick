@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { FaMapMarkerAlt, FaBars } from "react-icons/fa";
+import React, { useEffect, useState, useRef } from "react";
+import { FaMapMarkerAlt } from "react-icons/fa";
 import Sidebar from "../Sidebar";
 import "./Map.css";
 import { useLocation } from "react-router-dom";
@@ -15,10 +15,9 @@ const convertToLatLng = (x, y) => {
 const Map = () => {
   const [mapInstance, setMapInstance] = useState(null);
   const [currentMarker, setCurrentMarker] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [markers, setMarkers] = useState([]);
+  const markersRef = useRef([]);
   const location = useLocation();
 
   useEffect(() => {
@@ -54,8 +53,8 @@ const Map = () => {
       const places = location.state.places;
 
       // 기존 마커 제거
-      markers.forEach((marker) => marker.setMap(null));
-      setMarkers([]);
+      markersRef.current.forEach((marker) => marker.setMap(null));
+      markersRef.current = [];
 
       // 모든 장소에 마커 생성
       const newMarkers = places.map((place, index) => {
@@ -72,7 +71,7 @@ const Map = () => {
           },
         });
       });
-      setMarkers(newMarkers);
+      markersRef.current = newMarkers;
 
       // 첫 번째 장소로 지도 중심 이동
       if (places.length > 0) {

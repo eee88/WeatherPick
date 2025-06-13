@@ -17,7 +17,6 @@ const PostForm = () => {
   const [error, setError] = useState("");
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
 
   // 이미지 파일 선택 핸들러
   const handleImageChange = (e) => {
@@ -73,7 +72,6 @@ const PostForm = () => {
       mapy: place.mapy,
       category: place.category || "",
       link: place.link || "",
-      description: place.description || ""
     };
     setPlaces(newPlaces);
   };
@@ -137,7 +135,6 @@ const PostForm = () => {
           mapy: place.mapy,
           category: place.category || "",
           link: place.link || "",
-          description: place.description || ""
         })),
         images: uploadedUrls,
       };

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Modal from "react-modal";
-import { useNavigate } from "react-router-dom";
 import "../Mypage.css";
 import defaultProfile from "../assets/datepick_mypage.png";
 
@@ -10,7 +9,6 @@ Modal.setAppElement("#root");
 const API_URL = process.env.REACT_APP_API_URL;
 
 const Mypage = () => {
-  const navigate = useNavigate();
 
   const [userInfo, setUserInfo] = useState({
     name: "",
