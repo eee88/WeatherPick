@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import axios from "axios";
 import styled from "styled-components";
 import "./PlaceSearchInput.css";
@@ -41,15 +41,6 @@ const WrapSearchResult = styled.div`
   z-index: 1000;
 `;
 
-const SearchResultTitle = styled.div`
-  font-weight: 500;
-  margin-bottom: 4px;
-`;
-
-const SearchResultAddress = styled.div`
-  font-size: 12px;
-  color: #666;
-`;
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 

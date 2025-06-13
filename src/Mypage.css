@@ -21,7 +21,7 @@
 .mypage-wrapper {
   display: flex;
   min-height: 100vh;
-  background-color: #f0faff;
+  background-color: #ffe7e8;
 }
 
 .mypage-content {
@@ -93,7 +93,7 @@
   display: block;
   margin: 30px auto 0;
   padding: 12px 40px;
-  background-color: #4d5eff;
+  background-color: #e87678;
   color: white;
   border: none;
   border-radius: 8px;
@@ -152,7 +152,7 @@
 .upload-button {
   position: absolute;
   bottom: 0;
-  background-color: #007bff;
+  background-color: #f37d7f;
   color: white;
   border-radius: 50%;
   border: none;

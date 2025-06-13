@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import "../PostForm.css";
@@ -12,7 +12,7 @@ const PostEditForm = () => {
   const [post, setPost] = useState({
     title: "",
     content: "",
-    places: []
+    places: [],
   });
 
   const { title, content, places } = post;
@@ -29,54 +29,58 @@ const PostEditForm = () => {
   const handlePlaceSelect = (place, index) => {
     const newPlaces = [...post.places];
     newPlaces[index] = place;
-    setPost(prev => ({
+    setPost((prev) => ({
       ...prev,
-      places: newPlaces
+      places: newPlaces,
     }));
   };
 
   // 장소 추가
   const addPlace = () => {
     if (post.places.length < 5) {
-      setPost(prev => ({
+      setPost((prev) => ({
         ...prev,
-        places: [...prev.places, { title: "", address: "", roadAddress: "", mapx: "", mapy: "" }]
+        places: [
+          ...prev.places,
+          { title: "", address: "", roadAddress: "", mapx: "", mapy: "" },
+        ],
       }));
     }
   };
 
   // 장소 삭제
   const removePlace = (index) => {
-    setPost(prev => ({
+    setPost((prev) => ({
       ...prev,
-      places: prev.places.filter((_, i) => i !== index)
+      places: prev.places.filter((_, i) => i !== index),
     }));
   };
 
-  const getPost = async () => {
+  const getPost = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${API_URL}/api/posts/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
+      const response = await axios.get(`${API_URL}/api/posts/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (response.data.code === "SU") {
         setPost({
           title: response.data.title || "",
           content: response.data.content || "",
-          places: [] // 장소 정보는 빈 배열로 초기화
+          places: [], // 장소 정보는 빈 배열로 초기화
         });
       }
     } catch (error) {
       console.error("불러오지 못함", error);
       alert("게시글을 불러오는데 실패했습니다.");
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    getPost();
+  }, [getPost]);
 
   const backToPost = () => {
     navigate(`/board/${id}`);
@@ -102,7 +106,7 @@ const PostEditForm = () => {
         {
           title: post.title,
           content: post.content,
-          places: post.places
+          places: post.places,
         },
         {
           headers: {
@@ -111,7 +115,6 @@ const PostEditForm = () => {
           },
         }
       );
-      
       if (response.data.code === "SU") {
         alert("수정되었습니다.");
         navigate(`/board/${id}`);
@@ -123,10 +126,6 @@ const PostEditForm = () => {
       alert("게시물 수정에 실패했습니다.");
     }
   };
-
-  useEffect(() => {
-    getPost();
-  }, []);
 
   return (
     <div className="post-container">
@@ -165,7 +164,9 @@ const PostEditForm = () => {
       {places.map((place, index) => (
         <div key={index} className="post-row post-place-row">
           <PlaceSearchInput
-            onPlaceSelect={(selectedPlace) => handlePlaceSelect(selectedPlace, index)}
+            onPlaceSelect={(selectedPlace) =>
+              handlePlaceSelect(selectedPlace, index)
+            }
             initialValue={place.title}
           />
           {places.length > 1 && (

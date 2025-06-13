@@ -36,7 +36,7 @@
 }
 
 .login-button {
-  background-color: #007bff;
+  background-color: #e87678;
   color: white;
   padding: 10px;
   border: none;
@@ -46,7 +46,7 @@
 }
 
 .login-button:hover {
-  background-color: #0056b3;
+  background-color: #e87678;
 }
 
 .kakao-button {

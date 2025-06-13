@@ -50,7 +50,7 @@
 }
 
 .category-item:hover {
-  color: #2d8cff;
+  color: #ff44be;
 }
 
 .category-icon {
@@ -60,4 +60,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-} 
+}
