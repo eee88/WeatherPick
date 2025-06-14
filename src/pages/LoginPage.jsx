@@ -81,9 +81,6 @@ export default function LoginPage() {
           로그인
         </button>
         <div className="or-divider">or</div>
-        <button type="button" className="kakao-button">
-          카카오 로그인
-        </button>
       </form>
 
       <div className="signup-link">
