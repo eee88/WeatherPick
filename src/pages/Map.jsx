@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import Sidebar from "../Sidebar";
 import "./Map.css";
@@ -18,24 +18,160 @@ const Map = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const markersRef = useRef([]);
+  const polylinesRef = useRef([]);
   const location = useLocation();
+  const [searchOption, setSearchOption] = useState("0");
+  const [trafficInfo, setTrafficInfo] = useState("N");
+  const [routeMode, setRouteMode] = useState("car"); // 'car' 또는 'pedestrian'
+
+  const drawMarkersAndRoute = useCallback(async (map, places) => {
+    if (places.length < 2) return;
+
+    try {
+      const headers = {
+        "appKey": "RROpVnnpAl52gjyiFt5If76jWSVPKaTY5Zq9W3ku",
+        "Content-Type": "application/json"
+      };
+
+      // 기존 마커와 경로 제거
+      markersRef.current.forEach(marker => marker.setMap(null));
+      polylinesRef.current.forEach(polyline => polyline.setMap(null));
+      markersRef.current = [];
+      polylinesRef.current = [];
+
+      // 마커 색상 정의
+      const markerColors = [
+        "#ffb6c1", // 1번 마커 (밝은 핑크)
+        "#ff69b4", // 2번 마커 (핫 핑크)
+        "#ff1493", // 3번 마커 (딥 핑크)
+        "#c71585", // 4번 마커 (중간 핑크)
+        "#8b0000"  // 5번 마커 (어두운 레드)
+      ];
+
+      // 모든 장소에 마커 생성
+      const newMarkers = places.map((place, index) => {
+        const [lat, lng] = convertToLatLng(place.mapx, place.mapy);
+        return new window.naver.maps.Marker({
+          position: new window.naver.maps.LatLng(lat, lng),
+          map: map,
+          title: place.title,
+          icon: {
+            content: `<div style="background-color: ${markerColors[index]}; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">${
+              index + 1
+            }</div>`,
+            size: new window.naver.maps.Size(24, 24),
+            anchor: new window.naver.maps.Point(12, 12),
+          },
+        });
+      });
+      markersRef.current = newMarkers;
+
+      // 순차적으로 경로 그리기
+      for (let i = 0; i < places.length - 1; i++) {
+        const [startLat, startLng] = convertToLatLng(places[i].mapx, places[i].mapy);
+        const [endLat, endLng] = convertToLatLng(places[i + 1].mapx, places[i + 1].mapy);
+
+        // API 엔드포인트 선택
+        const endpoint = routeMode === "car" 
+          ? "https://apis.openapi.sk.com/tmap/routes?version=1&format=json"
+          : "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json";
+
+        const response = await axios.post(
+          endpoint,
+          {
+            startX: startLng.toString(),
+            startY: startLat.toString(),
+            endX: endLng.toString(),
+            endY: endLat.toString(),
+            reqCoordType: "WGS84GEO",
+            resCoordType: "WGS84GEO",
+            searchOption: searchOption,
+            trafficInfo: trafficInfo,
+            startName: places[i].title,
+            endName: places[i + 1].title
+          },
+          { headers }
+        );
+
+        const path = [];
+
+        // features에서 LineString 타입의 geometry를 찾아 경로 좌표 추출
+        response.data.features.forEach(feature => {
+          if (feature.geometry && feature.geometry.type === "LineString" && feature.geometry.coordinates) {
+            feature.geometry.coordinates.forEach(coord => {
+              const [lng, lat] = coord;
+              path.push(new window.naver.maps.LatLng(lat, lng));
+            });
+          }
+        });
+
+        // 경로 그리기
+        if (path.length > 0) {
+          const polyline = new window.naver.maps.Polyline({
+            path: path,
+            strokeColor: markerColors[i],
+            strokeStyle: "solid",
+            strokeOpacity: 1.0,
+            strokeWeight: 5,
+            clickable: true,
+            map: map
+          });
+
+          polylinesRef.current.push(polyline);
+
+          // 경로 정보 표시
+          if (response.data.features && response.data.features[0] && response.data.features[0].properties) {
+            const properties = response.data.features[0].properties;
+            const totalDistance = (properties.totalDistance / 1000).toFixed(1);
+            const totalTime = (properties.totalTime / 60).toFixed(0);
+
+            // 경로 중간에 정보 표시
+            const midPoint = path[Math.floor(path.length / 2)];
+            new window.naver.maps.InfoWindow({
+              content: `<div style="padding: 5px; font-size: 12px;">
+                        <div>${places[i].title} → ${places[i + 1].title}</div>
+                        <div>거리: ${totalDistance}km</div>
+                        <div>시간: ${totalTime}분</div>
+                        <div>모드: ${routeMode === "car" ? "차량" : "보행자"}</div>
+                      </div>`,
+              position: midPoint,
+              map: map,
+              maxWidth: 200,
+              pixelOffset: new window.naver.maps.Point(0, -10)
+            });
+          }
+        }
+      }
+
+      // 첫 번째 장소로 지도 중심 이동
+      const [firstLat, firstLng] = convertToLatLng(places[0].mapx, places[0].mapy);
+      map.setCenter(new window.naver.maps.LatLng(firstLat, firstLng));
+    } catch (error) {
+      console.error("경로 탐색 중 오류 발생:", error);
+    }
+  }, [searchOption, trafficInfo, routeMode]);
 
   useEffect(() => {
     const script = document.createElement("script");
-    script.src =
-      "https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=0p34tvz4ga";
+    script.src = "https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=0p34tvz4ga";
     script.async = true;
     script.onload = () => {
       if (window.naver && window.naver.maps) {
-        const defaultCenter = new window.naver.maps.LatLng(
-          35.1595454,
-          126.8526012
-        ); // 광주시청 좌표
+        const defaultCenter = new window.naver.maps.LatLng(35.1595454, 126.8526012);
         const map = new window.naver.maps.Map("map", {
           center: defaultCenter,
           zoom: 13,
+          zoomControl: true,
+          zoomControlOptions: {
+            position: window.naver.maps.Position.TOP_RIGHT
+          }
         });
         setMapInstance(map);
+
+        // 상세 게시물에서 전달받은 장소들로 경로 표시
+        if (location.state?.places) {
+          drawMarkersAndRoute(map, location.state.places);
+        }
       } else {
         console.error("Naver Maps API 로딩 실패");
       }
@@ -45,44 +181,7 @@ const Map = () => {
     return () => {
       document.head.removeChild(script);
     };
-  }, []);
-
-  // URL 파라미터에서 좌표 정보가 변경될 때마다 마커 업데이트
-  useEffect(() => {
-    if (mapInstance && location.state?.places) {
-      const places = location.state.places;
-
-      // 기존 마커 제거
-      markersRef.current.forEach((marker) => marker.setMap(null));
-      markersRef.current = [];
-
-      // 모든 장소에 마커 생성
-      const newMarkers = places.map((place, index) => {
-        const [lat, lng] = convertToLatLng(place.mapx, place.mapy);
-        return new window.naver.maps.Marker({
-          position: new window.naver.maps.LatLng(lat, lng),
-          map: mapInstance,
-          title: place.title,
-          icon: {
-            content: `<div style="background-color: #E87678; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">${
-              index + 1
-            }</div>`,
-            anchor: new window.naver.maps.Point(12, 12),
-          },
-        });
-      });
-      markersRef.current = newMarkers;
-
-      // 첫 번째 장소로 지도 중심 이동
-      if (places.length > 0) {
-        const [firstLat, firstLng] = convertToLatLng(
-          places[0].mapx,
-          places[0].mapy
-        );
-        mapInstance.setCenter(new window.naver.maps.LatLng(firstLat, firstLng));
-      }
-    }
-  }, [location.state, mapInstance]);
+  }, [location.state, drawMarkersAndRoute]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim() || !mapInstance) return;
@@ -167,9 +266,7 @@ const Map = () => {
   };
 
   return (
-    <div
-      style={{ display: "flex", height: "100vh", backgroundColor: "#f6f9fc" }}
-    >
+    <div style={{ display: "flex", height: "100vh", backgroundColor: "#f6f9fc" }}>
       <Sidebar />
 
       {/* 지도 */}
@@ -213,6 +310,57 @@ const Map = () => {
             검색
           </button>
         </div>
+
+        {/* 경로 옵션 선택 - 지도에서 보기로 들어왔을 때만 표시 */}
+        {location.state?.places && (
+          <div style={{
+            position: "absolute",
+            top: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            backgroundColor: "white",
+            padding: "15px",
+            borderRadius: "8px",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+          }}>
+            <div>
+              <button 
+                onClick={() => {
+                  setRouteMode("car");
+                  drawMarkersAndRoute(mapInstance, location.state.places);
+                }}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: routeMode === "car" ? "#E87678" : "#ccc",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px 0 0 8px",
+                  cursor: "pointer",
+                  marginRight: "-1px"
+                }}
+              >
+                차량
+              </button>
+              <button 
+                onClick={() => {
+                  setRouteMode("pedestrian");
+                  drawMarkersAndRoute(mapInstance, location.state.places);
+                }}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: routeMode === "pedestrian" ? "#E87678" : "#ccc",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "0 8px 8px 0",
+                  cursor: "pointer"
+                }}
+              >
+                보행자
+              </button>
+            </div>
+          </div>
+        )}
 
         <div id="map" style={{ width: "100%", height: "100%" }}></div>
 
