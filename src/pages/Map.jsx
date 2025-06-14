@@ -20,8 +20,6 @@ const Map = () => {
   const markersRef = useRef([]);
   const polylinesRef = useRef([]);
   const location = useLocation();
-  const [searchOption, setSearchOption] = useState("0");
-  const [trafficInfo, setTrafficInfo] = useState("N");
   const [routeMode, setRouteMode] = useState("car"); // 'car' 또는 'pedestrian'
 
   const drawMarkersAndRoute = useCallback(async (map, places) => {
@@ -85,8 +83,8 @@ const Map = () => {
             endY: endLat.toString(),
             reqCoordType: "WGS84GEO",
             resCoordType: "WGS84GEO",
-            searchOption: searchOption,
-            trafficInfo: trafficInfo,
+            searchOption: "0",
+            trafficInfo: "N",
             startName: places[i].title,
             endName: places[i + 1].title
           },
@@ -149,7 +147,7 @@ const Map = () => {
     } catch (error) {
       console.error("경로 탐색 중 오류 발생:", error);
     }
-  }, [searchOption, trafficInfo, routeMode]);
+  }, [routeMode]);
 
   useEffect(() => {
     const script = document.createElement("script");
