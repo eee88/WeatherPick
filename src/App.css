@@ -83,63 +83,75 @@
   padding: 0;
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+}
+
+.form-group label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #e87678;
+}
+
 .input-group {
   display: flex;
   gap: 8px;
-  align-items: center;
 }
 
 .input-group input {
   flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
 }
 
 .check-button {
-  padding: 8px 16px;
-  background-color: #ff69b4;
+  padding: 12px 16px;
+  background-color: #e87678;
   color: white;
   border: none;
   border-radius: 4px;
+  font-size: 14px;
   cursor: pointer;
+  transition: background-color 0.3s;
   white-space: nowrap;
-  transition: background-color 0.2s;
 }
 
 .check-button:hover {
-  background-color: #ff1493;
-}
-
-.check-button.checked {
-  background-color: #ff69b4;
-  opacity: 0.7;
-  cursor: default;
+  background-color: #d66567;
 }
 
 .validation-message {
+  font-size: 12px;
   margin-top: 4px;
-  font-size: 0.9rem;
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 
 .validation-message.success {
   color: #28a745;
-  background-color: rgba(40, 167, 69, 0.1);
 }
 
 .validation-message.error {
   color: #dc3545;
-  background-color: rgba(220, 53, 69, 0.1);
 }
 
 .error-message {
   color: #dc3545;
-  margin-top: 10px;
+  font-size: 14px;
+  margin-top: 8px;
   text-align: center;
-  font-size: 0.9em;
 }
 
 .auth-form input {

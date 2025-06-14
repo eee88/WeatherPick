@@ -180,7 +180,7 @@ export default function RegisterPage() {
       <h2 className="login-title">회원가입</h2>
 
       <form onSubmit={handleSubmit} className="login-form">
-        <div className="mb-4">
+        <div className="form-group">
           <label htmlFor="username">아이디</label>
           <div className="input-group">
             <input
@@ -189,7 +189,7 @@ export default function RegisterPage() {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="아이디"
+              placeholder="아이디를 입력하세요"
             />
             <button 
               type="button" 
@@ -204,7 +204,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="mb-4">
+        <div className="form-group">
           <label htmlFor="password">비밀번호</label>
           <input
             id="password"
@@ -212,11 +212,11 @@ export default function RegisterPage() {
             name="password"
             value={formData.password}
             onChange={handleChange}
-            placeholder="비밀번호"
+            placeholder="비밀번호를 입력하세요"
           />
         </div>
 
-        <div className="mb-4">
+        <div className="form-group">
           <label htmlFor="confirmPassword">비밀번호 확인</label>
           <input
             id="confirmPassword"
@@ -224,11 +224,11 @@ export default function RegisterPage() {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
-            placeholder="비밀번호 확인"
+            placeholder="비밀번호를 다시 입력하세요"
           />
         </div>
 
-        <div className="mb-4">
+        <div className="form-group">
           <label htmlFor="nickname">닉네임</label>
           <div className="input-group">
             <input
@@ -237,7 +237,7 @@ export default function RegisterPage() {
               name="nickname"
               value={formData.nickname}
               onChange={handleChange}
-              placeholder="닉네임"
+              placeholder="닉네임을 입력하세요"
             />
             <button 
               type="button" 
@@ -252,7 +252,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="mb-4">
+        <div className="form-group">
           <label htmlFor="email">이메일</label>
           <div className="input-group">
             <input
@@ -261,7 +261,7 @@ export default function RegisterPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="이메일"
+              placeholder="이메일을 입력하세요"
             />
             <button 
               type="button" 
@@ -276,7 +276,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="mb-4">
+        <div className="form-group">
           <label htmlFor="name">이름</label>
           <input
             id="name"
@@ -284,11 +284,11 @@ export default function RegisterPage() {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="이름"
+            placeholder="이름을 입력하세요"
           />
         </div>
 
-        <div className="mb-4">
+        <div className="form-group">
           <label htmlFor="phonenumber">전화번호</label>
           <input
             id="phonenumber"
@@ -296,7 +296,7 @@ export default function RegisterPage() {
             name="phonenumber"
             value={formData.phonenumber}
             onChange={handleChange}
-            placeholder="전화번호 (010-1234-5678)"
+            placeholder="전화번호를 입력하세요 (010-1234-5678)"
             pattern="^\d{3}-\d{4}-\d{4}$"
           />
         </div>

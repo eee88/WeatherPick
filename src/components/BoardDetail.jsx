@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../BoardDetail.css";
+import defaultProfile from "../assets/datepick_mypage.png";
 
 //  GET /api/posts/{id}             : 특정 게시글 상세 조회
 //  GET /api/posts/{id}/comments    : 특정 게시글의 댓글 목록 조회
@@ -220,7 +221,7 @@ const BoardDetail = () => {
           <div className="board-detail-meta">
             <div className="writer-info">
               <img 
-                src={post.writerProfileImage || "https://via.placeholder.com/30"} 
+                src={post.writerProfileImage || defaultProfile} 
                 alt="프로필" 
                 className="writer-profile-image"
               />
@@ -319,7 +320,7 @@ const BoardDetail = () => {
                 <div className="comment-header">
                   <div className="comment-author-info">
                     <img 
-                      src={comment.profileImage || "/weatherPickMy.png"} 
+                      src={comment.profileImage || defaultProfile} 
                       alt="프로필" 
                       className="comment-profile-image"
                     />

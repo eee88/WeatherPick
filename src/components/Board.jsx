@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../Board.css";
+import defaultProfile from "../assets/datepick_mypage.png";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
@@ -193,7 +194,7 @@ const Board = () => {
                 <div className="post-info">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <img
-                      src={board.writerProfileImage || "/datepick_logo.png"}
+                      src={board.writerProfileImage || defaultProfile}
                       alt="프로필"
                       style={{
                         width: "24px",

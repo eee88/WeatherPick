@@ -67,7 +67,7 @@ const PostForm = () => {
     newPlaces[index] = {
       title: place.title,
       address: place.address,
-      roadAddress: place.roadAddress,
+      roadAddress: place.roadAddress||"",
       mapx: place.mapx,
       mapy: place.mapy,
       category: place.category || "",
