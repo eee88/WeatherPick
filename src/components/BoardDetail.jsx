@@ -273,7 +273,7 @@ const BoardDetail = () => {
 
         {/* 본문 내용 */}
         <div className="board-detail-content">
-          <p>{post.content}</p>
+          <p style={{ whiteSpace: 'pre-line' }}>{post.content}</p>
         </div>
 
         {/* 통계 정보와 버튼 그룹 */}
@@ -328,7 +328,7 @@ const BoardDetail = () => {
                   </div>
                   <span className="comment-date">{comment.writeDateTime}</span>
                 </div>
-                <div className="comment-content">{comment.content}</div>
+                <div className="comment-content" style={{ whiteSpace: 'pre-line' }}>{comment.content}</div>
               </div>
             ))}
           </div>
